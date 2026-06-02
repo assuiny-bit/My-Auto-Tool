@@ -85,7 +85,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("完整流程測試 V2.3")
+        self.root.title("自動化測試 V2.4")
         self.root.geometry("400x380")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -177,25 +177,36 @@ class CustomApp:
         mouse_left_click()
         time.sleep(0.5)
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
-        time.sleep(1.2)
+        time.sleep(1.5)
 
-        # 12. 搜尋 5566.png (置入時), 中心向下偏移 28 點擊
-        self.status_label.config(text="正在搜尋 '5566.png'...")
-        try:
-            image_path_5566 = os.path.join(base_path, "5566.png")
-            location_5566 = pyautogui.locateOnScreen(image_path_5566, confidence=0.8)
-            if location_5566:
-                tx = location_5566.left + location_5566.width // 2
-                ty = (location_5566.top + location_5566.height // 2) + 28
-                self.status_label.config(text="定位 5566 成功! 執行點擊")
-                move_mouse_to(tx, ty)
-                time.sleep(0.5)
-                mouse_left_click()
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片 '5566.png'")
-                time.sleep(1.5)
-        except: pass
+        # 12. 搜尋 '345.png', 移動至中心向下 27, 向右 30 並點擊
+        self.status_label.config(text="正在搜尋 '345.png'...")
+        found_345 = False
+        image_path_345 = os.path.join(base_path, "345.png")
+        
+        for attempt in range(5):
+            if not self.is_running: break
+            try:
+                location_345 = pyautogui.locateOnScreen(image_path_345, confidence=0.7)
+                if location_345:
+                    tx = (location_345.left + location_345.width // 2) + 30
+                    ty = (location_345.top + location_345.height // 2) + 27
+                    self.status_label.config(text=f"定位 345 成功! 移動至 ({tx}, {ty})")
+                    move_mouse_to(tx, ty)
+                    time.sleep(0.5)
+                    mouse_left_click()
+                    found_345 = True
+                    time.sleep(0.8)
+                    break
+                else:
+                    self.status_label.config(text=f"搜尋 '345.png' 中... ({attempt+1}/5)")
+                    time.sleep(1.0)
+            except:
+                time.sleep(1.0)
+
+        if not found_345:
+            self.status_label.config(text="最終未找到圖片 '345.png'")
+            time.sleep(1.5)
 
         # 13. 按 X 鍵
         self.status_label.config(text="執行: 按 X 鍵")
