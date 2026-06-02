@@ -6,7 +6,7 @@ import random
 import sys
 
 # =================================================================
-# C 強化版：自定義按鍵流程 (X -> 9)
+# C 強化版：精確計時流程 (X -> 等待 1 秒 -> 9)
 # =================================================================
 
 class KEYBDINPUT(ctypes.Structure):
@@ -48,15 +48,15 @@ def send_key(scancode, is_up=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("自定義按鍵工具 (X->9)")
+        self.root.title("按鍵助手 (X-1s-9)")
         self.root.geometry("300x250")
         self.root.attributes("-topmost", True)
         self.is_running = False
         
-        tk.Label(root, text="按鍵流程: X -> 9", font=("Arial", 12, "bold")).pack(pady=10)
+        tk.Label(root, text="流程: X -> 等待 1 秒 -> 9", font=("Arial", 12, "bold")).pack(pady=10)
         self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11))
         self.status_label.pack(pady=20)
-        self.start_btn = tk.Button(root, text="開始執行", command=self.start, width=20, height=2, bg="#4CAF50", fg="white")
+        self.start_btn = tk.Button(root, text="開始執行", command=self.start, width=20, height=2, bg="#2196F3", fg="white")
         self.start_btn.pack(pady=5)
 
     def start(self):
@@ -73,16 +73,19 @@ class CustomApp:
         
         self.status_label.config(text="執行中...")
         
-        # 2. 按下 X
+        # 2. 按下 X 並放開
         send_key(SCAN_X, False)
-        time.sleep(0.1)
+        time.sleep(0.1) # 模擬按壓時長
         send_key(SCAN_X, True)
         
-        time.sleep(0.5) # 兩鍵之間的微小間隔
+        # --- 關鍵等待：1 秒 ---
+        self.status_label.config(text="等待 1 秒中...")
+        time.sleep(1.0)
         
-        # 3. 按下數字 9
+        # 3. 按下數字 9 並放開
+        self.status_label.config(text="執行按鍵 9...")
         send_key(SCAN_9, False)
-        time.sleep(0.1)
+        time.sleep(0.1) # 模擬按壓時長
         send_key(SCAN_9, True)
         
         self.status_label.config(text="狀態: 執行完畢")
