@@ -8,7 +8,7 @@ import pyautogui
 import os
 
 # =================================================================
-# C 強化版 V2.3：底層絕對座標移動 (繞過系統限制)
+# C 強化版 V2.9：底層絕對座標移動 (多層級圖片比對強化)
 # =================================================================
 
 class KEYBDINPUT(ctypes.Structure):
@@ -85,7 +85,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("自動化測試 V2.7")
+        self.root.title("自動化測試 V2.9")
         self.root.geometry("400x380")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -178,39 +178,55 @@ class CustomApp:
         time.sleep(0.5)
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
         
-        # --- 步驟 12 之前的關鍵等待 ---
-        self.status_label.config(text="等待介面穩定 (2秒)...")
-        time.sleep(2.0)
+        # --- 步驟 12 強化搜尋 ---
+        self.status_label.config(text="等待介面穩定 (3秒)...")
+        time.sleep(3.0)
 
-        # 12. 搜尋 'CLOSS.png' 並執行兩次向右偏移點擊
-        self.status_label.config(text="正在搜尋 'CLOSS.png' (關閉)...")
+        self.status_label.config(text="正在搜尋 'CLOSS.png' (分段比對中)...")
+        found_closs = False
         try:
             image_path_closs = os.path.join(base_path, "CLOSS.png")
-            location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=0.8)
-            if location_closs:
-                # 儲存中心座標
+            # 第一階段：高精度找 5 次
+            for attempt in range(5):
+                if not self.is_running: break
+                location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=0.7, grayscale=True)
+                if location_closs:
+                    found_closs = True; break
+                self.status_label.config(text=f"搜尋 'CLOSS.png' (高精度) {attempt+1}/5")
+                time.sleep(0.5)
+            
+            # 第二階段：若找不到，降低精度再找 5 次
+            if not found_closs:
+                for attempt in range(5):
+                    if not self.is_running: break
+                    location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=0.6, grayscale=True)
+                    if location_closs:
+                        found_closs = True; break
+                    self.status_label.config(text=f"搜尋 'CLOSS.png' (低精度) {attempt+1}/5")
+                    time.sleep(0.5)
+
+            if found_closs and location_closs:
                 closs_x = location_closs.left + location_closs.width // 2
                 closs_y = location_closs.top + location_closs.height // 2
                 
                 self.status_label.config(text="定位 CLOSS 成功! 執行兩次偏移點擊")
-                
-                # 第一次向右偏移 20 (0.2)
+                # 第一次向右偏移 20
                 move_mouse_to(closs_x + 20, closs_y)
                 time.sleep(0.3)
                 mouse_left_click()
                 time.sleep(0.5)
                 
-                # 第二次再向右偏移 20 (相對於中心點總共偏移 40)
+                # 第二次再向右偏移 20 (總共 40)
                 move_mouse_to(closs_x + 40, closs_y)
                 time.sleep(0.3)
                 mouse_left_click()
-                
-                self.status_label.config(text="點擊完成，延遲 1 秒...")
                 time.sleep(1.0)
             else:
-                self.status_label.config(text="未找到圖片 'CLOSS.png'")
+                self.status_label.config(text="最終未找到圖片 'CLOSS.png'")
                 time.sleep(1.5)
-        except: pass
+        except Exception as e:
+            self.status_label.config(text=f"步驟 12 錯誤: {e}")
+            time.sleep(1.5)
 
         # 13. 按 X 鍵
         self.status_label.config(text="執行: 按 X 鍵")
