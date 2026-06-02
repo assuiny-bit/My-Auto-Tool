@@ -105,7 +105,6 @@ class CustomApp:
             threading.Thread(target=self.run, daemon=True).start()
 
     def run(self):
-        # 初始化路徑，確保所有步驟都能讀取到
         base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
         
         for i in range(3, 0, -1):
@@ -138,8 +137,7 @@ class CustomApp:
                 pos = pyautogui.position()
                 current_x, current_y = pos.x, pos.y
                 time.sleep(1)
-        except Exception as e:
-            print(f"Error Step 7: {e}")
+        except: pass
 
         # 8. 壓住 Alt 並點擊右鍵 20 次
         self.status_label.config(text="執行: 壓住 Alt + 底層右鍵 20 次")
@@ -187,33 +185,38 @@ class CustomApp:
         mouse_left_click()
         time.sleep(0.5)
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
-        time.sleep(0.8)
+        time.sleep(1.2) # 增加等待時間
 
-        # 12. 搜尋圖片 03.png (關閉), 移動至正中間, 向上偏移 3, 向下偏移 3, 點擊左鍵
-        self.status_label.config(text="正在搜尋 '03.png' (關閉)...")
-        try:
-            image_path_03 = os.path.join(base_path, "03.png")
-            location_03 = pyautogui.locateOnScreen(image_path_03, confidence=0.8)
-            if location_03:
-                tx_03 = location_03.left + location_03.width // 2
-                ty_03 = location_03.top + location_03.height // 2
-                
-                self.status_label.config(text=f"定位 03 成功! 執行微移並點擊左鍵")
-                # 執行向上偏移 3 像素
-                move_mouse_to(tx_03, ty_03 - 3)
-                time.sleep(0.3)
-                # 執行向下偏移 3 像素 (回到中心)
-                move_mouse_to(tx_03, ty_03)
-                time.sleep(0.3)
-                # 點擊左鍵
-                mouse_left_click()
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片 '03.png'，請確認檔案存在")
-                time.sleep(1.5)
-        except Exception as e:
-            self.status_label.config(text=f"步驟 12 錯誤: {e}")
-            time.sleep(1.5)
+        # 12. 循環搜尋圖片 03.png (關閉)
+        self.status_label.config(text="正在搜尋 '03.png' (循環嘗試)...")
+        found_03 = False
+        image_path_03 = os.path.join(base_path, "03.png")
+        
+        for attempt in range(5):
+            if not self.is_running: break
+            try:
+                location_03 = pyautogui.locateOnScreen(image_path_03, confidence=0.7)
+                if location_03:
+                    tx_03 = location_03.left + location_03.width // 2
+                    ty_03 = location_03.top + location_03.height // 2
+                    self.status_label.config(text=f"定位 03 成功! 執行微移點擊")
+                    move_mouse_to(tx_03, ty_03 - 3)
+                    time.sleep(0.3)
+                    move_mouse_to(tx_03, ty_03)
+                    time.sleep(0.3)
+                    mouse_left_click()
+                    found_03 = True
+                    time.sleep(0.8)
+                    break
+                else:
+                    self.status_label.config(text=f"搜尋 '03.png' 中... ({attempt+1}/5)")
+                    time.sleep(1.0)
+            except:
+                time.sleep(1.0)
+
+        if not found_03:
+            self.status_label.config(text="最終未找到圖片 '03.png'")
+            time.sleep(1.0)
 
         # 13. 按一次鍵盤 X
         self.status_label.config(text="執行: 按一次鍵盤 X")
