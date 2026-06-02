@@ -116,14 +116,14 @@ class CustomApp:
             image_path = os.path.join(base_path, "01.png")
             location = pyautogui.locateOnScreen(image_path, confidence=0.8)
             if location:
-                target_x = (location.left + location.width // 2) + 30
-                target_y = (location.top + location.height // 2) - 30
+                target_x = (location.left + location.width // 2) + 32 # 向右偏移 32
+                target_y = (location.top + location.height // 2) - 30 # 向上偏移 30
                 
                 self.status_label.config(text=f"定位成功! 底層移動至 ({target_x}, {target_y})")
                 move_mouse_to(target_x, target_y) # --- 使用底層移動 ---
                 time.sleep(0.8)
             else:
-                self.status_label.config(text="未找到圖片，跳過移動")
+                self.status_label.config(text="未找到圖片 '01.png'，跳過移動")
                 time.sleep(1)
         except: pass
 
@@ -137,6 +137,37 @@ class CustomApp:
             self.status_label.config(text=f"右鍵點擊: {k+1}/20")
             mouse_right_click()
             time.sleep(0.6)
+            
+        send_key(SCAN_ALT, True)
+        time.sleep(0.5)
+
+        # 9. 搜尋圖片 '02.png' 並移動滑鼠至中心偏移 (向右 32, 向上 60)
+        self.status_label.config(text="正在搜尋 '02.png'...")
+        try:
+            image_path_02 = os.path.join(base_path, "02.png")
+            location_02 = pyautogui.locateOnScreen(image_path_02, confidence=0.8)
+            if location_02:
+                target_x_02 = (location_02.left + location_02.width // 2) + 32
+                target_y_02 = (location_02.top + location_02.height // 2) - 60
+                
+                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x_02}, {target_y_02})")
+                move_mouse_to(target_x_02, target_y_02)
+                time.sleep(0.8)
+            else:
+                self.status_label.config(text="未找到圖片 '02.png'，跳過步驟 9")
+                time.sleep(1)
+        except: pass
+
+        # 10. 壓住 Alt 並點擊右鍵 10 次，間隔 0.4 秒
+        self.status_label.config(text="執行: 壓住 Alt + 底層右鍵 10 次 (間隔 0.4s)")
+        send_key(SCAN_ALT, False)
+        time.sleep(0.3)
+        
+        for k in range(10):
+            if not self.is_running: break
+            self.status_label.config(text=f"右鍵點擊: {k+1}/10")
+            mouse_right_click()
+            time.sleep(0.4) # 間隔 0.4 秒
             
         send_key(SCAN_ALT, True)
         
