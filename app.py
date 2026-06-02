@@ -116,8 +116,8 @@ class CustomApp:
             image_path = os.path.join(base_path, "01.png")
             location = pyautogui.locateOnScreen(image_path, confidence=0.8)
             if location:
-                target_x = (location.left + location.width // 2) + 25
-                target_y = (location.top + location.height // 2) - 25
+                target_x = (location.left + location.width // 2) + 28
+                target_y = (location.top + location.height // 2) - 28
                 
                 self.status_label.config(text=f"定位成功! 底層移動至 ({target_x}, {target_y})")
                 move_mouse_to(target_x, target_y) # --- 使用底層移動 ---
