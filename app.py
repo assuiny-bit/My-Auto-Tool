@@ -8,7 +8,7 @@ import pyautogui
 import os
 
 # =================================================================
-# C 強化版 V2.9：底層絕對座標移動 (多層級圖片比對強化)
+# C 強化版 V3.2：完整步驟 1-13、停止按鈕、4小時循環與即時倒數
 # =================================================================
 
 class KEYBDINPUT(ctypes.Structure):
@@ -85,31 +85,89 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("自動化測試 V2.9")
-        self.root.geometry("400x380")
+        self.root.title("自動化循環 V3.2")
+        self.root.geometry("400x450")
         self.root.attributes("-topmost", True)
         self.is_running = False
+        self.stop_requested = False
+        self.cycle_count = 0
         
-        tk.Label(root, text="自動化流程 (步驟 1-13)", font=("Arial", 11, "bold")).pack(pady=10)
-        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11))
-        self.status_label.pack(pady=20)
-        self.start_btn = tk.Button(root, text="開始執行", command=self.start, width=20, height=2, bg="#4CAF50", fg="white")
-        self.start_btn.pack(pady=5)
+        tk.Label(root, text="自動化流程 (步驟 1-13)", font=("Arial", 12, "bold")).pack(pady=10)
+        
+        self.cycle_label = tk.Label(root, text="目前執行次數: 0 / 6", font=("Arial", 10))
+        self.cycle_label.pack(pady=5)
+        
+        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue")
+        self.status_label.pack(pady=10)
+        
+        self.countdown_label = tk.Label(root, text="下次執行倒數: --:--:--", font=("Consolas", 14, "bold"), fg="green")
+        self.countdown_label.pack(pady=10)
+        
+        btn_frame = tk.Frame(root)
+        btn_frame.pack(pady=15)
+        
+        self.start_btn = tk.Button(btn_frame, text="開始執行", command=self.start, width=15, height=2, bg="#4CAF50", fg="white")
+        self.start_btn.pack(side="left", padx=10)
+        
+        self.stop_btn = tk.Button(btn_frame, text="停止執行", command=self.stop, width=15, height=2, bg="#f44336", fg="white", state="disabled")
+        self.stop_btn.pack(side="left", padx=10)
 
     def start(self):
         if not self.is_running:
             self.is_running = True
+            self.stop_requested = False
             self.start_btn.config(state="disabled")
-            threading.Thread(target=self.run, daemon=True).start()
+            self.stop_btn.config(state="normal")
+            threading.Thread(target=self.main_loop, daemon=True).start()
 
-    def run(self):
+    def stop(self):
+        self.stop_requested = True
+        self.status_label.config(text="狀態: 正在請求停止...", fg="red")
+
+    def main_loop(self):
+        self.cycle_count = 0
+        while self.cycle_count < 6 and not self.stop_requested:
+            self.cycle_count += 1
+            self.cycle_label.config(text=f"目前執行次數: {self.cycle_count} / 6")
+            self.countdown_label.config(text="下次執行倒數: 執行中...")
+            
+            success = self.run_steps()
+            
+            if self.stop_requested or not success:
+                break
+                
+            if self.cycle_count < 6:
+                wait_seconds = 4 * 3600
+                for s in range(wait_seconds, 0, -1):
+                    if self.stop_requested: break
+                    h = s // 3600
+                    m = (s % 3600) // 60
+                    sec = s % 60
+                    self.countdown_label.config(text=f"下次執行倒數: {h:02d}:{m:02d}:{sec:02d}")
+                    self.status_label.config(text="狀態: 等待循環中", fg="green")
+                    time.sleep(1)
+            else:
+                self.countdown_label.config(text="下次執行倒數: 已全部完成")
+        
+        self.is_running = False
+        self.start_btn.config(state="normal")
+        self.stop_btn.config(state="disabled")
+        if self.stop_requested:
+            self.status_label.config(text="狀態: 已停止 (歸零)", fg="red")
+            self.cycle_label.config(text="目前執行次數: 0 / 6")
+            self.countdown_label.config(text="下次執行倒數: --:--:--")
+        else:
+            self.status_label.config(text="狀態: 全部循環完成", fg="blue")
+
+    def run_steps(self):
         base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
         
         for i in range(3, 0, -1):
+            if self.stop_requested: return False
             self.status_label.config(text=f"請切換視窗... {i}")
             time.sleep(1)
         
-        # 1-6 步: 鍵盤流程
+        if self.stop_requested: return False
         self.status_label.config(text="執行: 基礎按鍵序列...")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(1.0)
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
@@ -118,7 +176,6 @@ class CustomApp:
             send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
 
-        # 7. 搜尋 01.png 並定位基準點
         self.status_label.config(text="正在搜尋 '01.png'...")
         base_x, base_y = 0, 0
         try:
@@ -127,114 +184,56 @@ class CustomApp:
             if location_01:
                 base_x = (location_01.left + location_01.width // 2) + 32
                 base_y = (location_01.top + location_01.height // 2) - 30
-                self.status_label.config(text=f"定位 01 成功! 移動至 ({base_x}, {base_y})")
                 move_mouse_to(base_x, base_y)
                 time.sleep(0.8)
             else:
-                self.status_label.config(text="未找到圖片 '01.png'")
                 pos = pyautogui.position()
                 base_x, base_y = pos.x, pos.y
-                time.sleep(1)
         except: pass
 
-        # 8. 壓住 Alt 並點擊右鍵 20 次
-        self.status_label.config(text="執行: Alt + 右鍵 20 次")
-        send_key(SCAN_ALT, False)
-        time.sleep(0.3)
-        for k in range(20):
-            if not self.is_running: break
-            mouse_right_click()
-            time.sleep(0.6)
-        send_key(SCAN_ALT, True)
-        time.sleep(0.5)
+        send_key(SCAN_ALT, False); time.sleep(0.3)
+        for _ in range(20):
+            if self.stop_requested: break
+            mouse_right_click(); time.sleep(0.6)
+        send_key(SCAN_ALT, True); time.sleep(0.5)
 
-        # 9. 相對偏移點擊 (左 32, 下 60)
-        self.status_label.config(text="執行: 偏移點擊 (左 32, 下 60)")
-        curr_x = base_x - 32
-        curr_y = base_y + 60
-        move_mouse_to(curr_x, curr_y)
-        time.sleep(0.5)
-        mouse_left_click()
-        time.sleep(1.0)
+        if self.stop_requested: return False
+        move_mouse_to(base_x - 32, base_y + 60); time.sleep(0.5)
+        mouse_left_click(); time.sleep(1.0)
 
-        # 10. 回到基準點, Alt + 右鍵 10 次
-        self.status_label.config(text="執行: 回位 Alt + 右鍵 10 次")
-        move_mouse_to(base_x, base_y)
-        time.sleep(0.5)
-        send_key(SCAN_ALT, False)
-        time.sleep(0.3)
-        for k in range(10):
-            if not self.is_running: break
-            mouse_right_click()
-            time.sleep(0.5)
-        send_key(SCAN_ALT, True)
-        time.sleep(0.5)
+        if self.stop_requested: return False
+        move_mouse_to(base_x, base_y); time.sleep(0.5)
+        send_key(SCAN_ALT, False); time.sleep(0.3)
+        for _ in range(10):
+            if self.stop_requested: break
+            mouse_right_click(); time.sleep(0.5)
+        send_key(SCAN_ALT, True); time.sleep(0.5)
 
-        # 11. 相對偏移點擊 (左 32, 下 30) + ESC
-        self.status_label.config(text="執行: 偏移點擊 + ESC")
-        move_mouse_to(base_x - 32, base_y + 30)
-        time.sleep(0.5)
-        mouse_left_click()
-        time.sleep(0.5)
-        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
-        
-        # --- 步驟 12 強化搜尋 ---
-        self.status_label.config(text="等待介面穩定 (3秒)...")
-        time.sleep(3.0)
+        if self.stop_requested: return False
+        move_mouse_to(base_x - 32, base_y + 30); time.sleep(0.5)
+        mouse_left_click(); time.sleep(0.5)
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(3.0)
 
-        self.status_label.config(text="正在搜尋 'CLOSS.png' (分段比對中)...")
+        self.status_label.config(text="搜尋 'CLOSS.png' (強化搜尋中)...")
         found_closs = False
         try:
             image_path_closs = os.path.join(base_path, "CLOSS.png")
-            # 第一階段：高精度找 5 次
-            for attempt in range(5):
-                if not self.is_running: break
-                location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=0.7, grayscale=True)
+            for attempt in range(10):
+                if self.stop_requested: break
+                conf = 0.7 if attempt < 5 else 0.6
+                location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=conf, grayscale=True)
                 if location_closs:
+                    cx = location_closs.left + location_closs.width // 2
+                    cy = location_closs.top + location_closs.height // 2
+                    move_mouse_to(cx + 20, cy); time.sleep(0.3); mouse_left_click(); time.sleep(0.5)
+                    move_mouse_to(cx + 40, cy); time.sleep(0.3); mouse_left_click(); time.sleep(1.0)
                     found_closs = True; break
-                self.status_label.config(text=f"搜尋 'CLOSS.png' (高精度) {attempt+1}/5")
                 time.sleep(0.5)
-            
-            # 第二階段：若找不到，降低精度再找 5 次
-            if not found_closs:
-                for attempt in range(5):
-                    if not self.is_running: break
-                    location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=0.6, grayscale=True)
-                    if location_closs:
-                        found_closs = True; break
-                    self.status_label.config(text=f"搜尋 'CLOSS.png' (低精度) {attempt+1}/5")
-                    time.sleep(0.5)
+        except: pass
 
-            if found_closs and location_closs:
-                closs_x = location_closs.left + location_closs.width // 2
-                closs_y = location_closs.top + location_closs.height // 2
-                
-                self.status_label.config(text="定位 CLOSS 成功! 執行兩次偏移點擊")
-                # 第一次向右偏移 20
-                move_mouse_to(closs_x + 20, closs_y)
-                time.sleep(0.3)
-                mouse_left_click()
-                time.sleep(0.5)
-                
-                # 第二次再向右偏移 20 (總共 40)
-                move_mouse_to(closs_x + 40, closs_y)
-                time.sleep(0.3)
-                mouse_left_click()
-                time.sleep(1.0)
-            else:
-                self.status_label.config(text="最終未找到圖片 'CLOSS.png'")
-                time.sleep(1.5)
-        except Exception as e:
-            self.status_label.config(text=f"步驟 12 錯誤: {e}")
-            time.sleep(1.5)
-
-        # 13. 按 X 鍵
-        self.status_label.config(text="執行: 按 X 鍵")
-        send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
-        
-        self.status_label.config(text="狀態: 執行完畢")
-        self.is_running = False
-        self.start_btn.config(state="normal")
+        if self.stop_requested: return False
+        send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(0.5)
+        return True
 
 if __name__ == "__main__":
     root = tk.Tk()
