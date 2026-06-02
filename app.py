@@ -32,10 +32,8 @@ MOUSEEVENTF_MOVE = 0x0001
 MOUSEEVENTF_ABSOLUTE = 0x8000 # --- 關鍵：絕對座標模式 ---
 MOUSEEVENTF_RIGHTDOWN = 0x0008
 MOUSEEVENTF_RIGHTUP = 0x0010
-MOUSEEVENTF_LEFTDOWN = 0x0002 # --- 新增：左鍵按下 ---
-MOUSEEVENTF_LEFTUP = 0x0004   # --- 新增：左鍵放開 ---
 
-SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38; SCAN_ESC = 0x01 # --- 新增：ESC 鍵掃描碼 ---
+SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38
 
 try:
     win32u = ctypes.WinDLL("win32u.dll", use_last_error=True)
@@ -68,13 +66,6 @@ def mouse_right_click():
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
     time.sleep(random.uniform(0.05, 0.1))
     mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_RIGHTUP, time=0, dwExtraInfo=None)
-    send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
-
-def mouse_left_click(): # --- 新增：左鍵點擊功能 ---
-    mi_down = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTDOWN, time=0, dwExtraInfo=None)
-    send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
-    time.sleep(random.uniform(0.05, 0.1))
-    mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTUP, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
 
 def send_key(scancode, is_up=False, is_extended=False):
@@ -125,116 +116,30 @@ class CustomApp:
             image_path = os.path.join(base_path, "01.png")
             location = pyautogui.locateOnScreen(image_path, confidence=0.8)
             if location:
-                target_x = (location.left + location.width // 2) + 25
-                target_y = (location.top + location.height // 2) - 25
+                target_x = (location.left + location.width // 2) + 30
+                target_y = (location.top + location.height // 2) - 30
                 
                 self.status_label.config(text=f"定位成功! 底層移動至 ({target_x}, {target_y})")
                 move_mouse_to(target_x, target_y) # --- 使用底層移動 ---
                 time.sleep(0.8)
             else:
-                self.status_label.config(text="未找到圖片 '01.png'，跳過移動")
+                self.status_label.config(text="未找到圖片，跳過移動")
                 time.sleep(1)
-        except Exception as e:
-            self.status_label.config(text=f"搜尋 '01.png' 發生錯誤: {e}")
-            time.sleep(1)
+        except: pass
 
-        # 8. 搜尋圖片 '02.png' 並移動滑鼠至中心向下偏移 10 像素後左鍵點擊
-        self.status_label.config(text="正在搜尋 '02.png'...")
-        try:
-            image_path_02 = os.path.join(base_path, "02.png")
-            location_02 = pyautogui.locateOnScreen(image_path_02, confidence=0.8)
-            if location_02:
-                target_x_02 = location_02.left + location_02.width // 2
-                target_y_02 = (location_02.top + location_02.height // 2) + 10 # 向下偏移 10 像素 (0.1 假定為 10 像素)
-                
-                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x_02}, {target_y_02}) 並左鍵點擊")
-                move_mouse_to(target_x_02, target_y_02)
-                time.sleep(0.5)
-                mouse_left_click()
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片 '02.png'，跳過步驟 8")
-                time.sleep(1)
-        except Exception as e:
-            self.status_label.config(text=f"搜尋 '02.png' 發生錯誤: {e}")
-            time.sleep(1)
-
-        # 9. 從當前位置向右偏移 28 向上偏移 56，壓住 ALT 並右鍵點擊 10 次
-        self.status_label.config(text="執行: 壓住 Alt + 底層右鍵 10 次 (偏移後)")
-        # 這裡需要知道上一步滑鼠的最終位置，但由於 move_mouse_to 是絕對座標，所以直接計算新的絕對座標
-        # 假設上一步的 target_x_02, target_y_02 是當前位置
-        if 'location_02' in locals() and location_02:
-            current_x = location_02.left + location_02.width // 2
-            current_y = (location_02.top + location_02.height // 2) + 10
-            target_x_09 = current_x + 28
-            target_y_09 = current_y - 56
-            move_mouse_to(target_x_09, target_y_09)
-            time.sleep(0.5)
-        else:
-            self.status_label.config(text="無法獲取 '02.png' 位置，步驟 9 將從當前滑鼠位置開始偏移")
-            # 如果沒有找到 02.png，則無法進行相對偏移，這裡需要更明確的處理方式
-            # 為了測試，暫時假設滑鼠停留在螢幕中央，並進行絕對偏移
-            # 實際應用中，如果找不到圖片，可能需要終止或跳過此步驟
-            pass # 這裡需要根據實際需求調整
-
-        send_key(SCAN_ALT, False) # 壓住 Alt
+        # 8. 壓住 Alt 並點擊右鍵 20 次
+        self.status_label.config(text="執行: 壓住 Alt + 底層右鍵 20 次")
+        send_key(SCAN_ALT, False)
         time.sleep(0.3)
         
-        for k in range(10):
+        for k in range(20):
             if not self.is_running: break
-            self.status_label.config(text=f"右鍵點擊: {k+1}/10")
+            self.status_label.config(text=f"右鍵點擊: {k+1}/20")
             mouse_right_click()
             time.sleep(0.6)
             
-        send_key(SCAN_ALT, True) # 放開 Alt
-        time.sleep(0.5)
-
-        # 10. 搜尋圖片 '03.png' 並移動滑鼠至中心向右偏移 20 像素後左鍵點擊
-        self.status_label.config(text="正在搜尋 '03.png'...")
-        try:
-            image_path_03 = os.path.join(base_path, "03.png")
-            location_03 = pyautogui.locateOnScreen(image_path_03, confidence=0.8)
-            if location_03:
-                target_x_03 = (location_03.left + location_03.width // 2) + 20 # 向右偏移 20 像素 (0.2 假定為 20 像素)
-                target_y_03 = location_03.top + location_03.height // 2
-                
-                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x_03}, {target_y_03}) 並左鍵點擊")
-                move_mouse_to(target_x_03, target_y_03)
-                time.sleep(0.5)
-                mouse_left_click()
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片 '03.png'，跳過步驟 10")
-                time.sleep(1)
-        except Exception as e:
-            self.status_label.config(text=f"搜尋 '03.png' 發生錯誤: {e}")
-            time.sleep(1)
-
-        # 11. 搜尋圖片 '01.png' 並移動滑鼠至中心向下偏移 10 像素後左鍵點擊，然後按 ESC
-        self.status_label.config(text="正在搜尋 '01.png' (再次)...")
-        try:
-            image_path_01_again = os.path.join(base_path, "01.png")
-            location_01_again = pyautogui.locateOnScreen(image_path_01_again, confidence=0.8)
-            if location_01_again:
-                target_x_01_again = location_01_again.left + location_01_again.width // 2
-                target_y_01_again = (location_01_again.top + location_01_again.height // 2) + 10 # 向下偏移 10 像素 (0.1 假定為 10 像素)
-                
-                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x_01_again}, {target_y_01_again}) 並左鍵點擊")
-                move_mouse_to(target_x_01_again, target_y_01_again)
-                time.sleep(0.5)
-                mouse_left_click()
-                time.sleep(0.8)
-                
-                self.status_label.config(text="按下 ESC 鍵")
-                send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
-                time.sleep(0.5)
-            else:
-                self.status_label.config(text="未找到圖片 '01.png'，跳過步驟 11")
-                time.sleep(1)
-        except Exception as e:
-            self.status_label.config(text=f"搜尋 '01.png' 發生錯誤: {e}")
-            time.sleep(1)
-
+        send_key(SCAN_ALT, True)
+        
         self.status_label.config(text="狀態: 執行完畢")
         self.is_running = False
         self.start_btn.config(state="normal")
