@@ -32,6 +32,8 @@ MOUSEEVENTF_MOVE = 0x0001
 MOUSEEVENTF_ABSOLUTE = 0x8000 # --- 關鍵：絕對座標模式 ---
 MOUSEEVENTF_RIGHTDOWN = 0x0008
 MOUSEEVENTF_RIGHTUP = 0x0010
+MOUSEEVENTF_LEFTDOWN = 0x0002 # --- 新增：左鍵按下 ---
+MOUSEEVENTF_LEFTUP = 0x0004   # --- 新增：左鍵放開 ---
 
 SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38
 
@@ -66,6 +68,13 @@ def mouse_right_click():
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
     time.sleep(random.uniform(0.05, 0.1))
     mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_RIGHTUP, time=0, dwExtraInfo=None)
+    send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
+
+def mouse_left_click(): # --- 新增：左鍵點擊功能 ---
+    mi_down = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTDOWN, time=0, dwExtraInfo=None)
+    send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
+    time.sleep(random.uniform(0.05, 0.1))
+    mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTUP, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
 
 def send_key(scancode, is_up=False, is_extended=False):
@@ -111,19 +120,22 @@ class CustomApp:
 
         # 7. 搜尋圖片並移動 (改用底層移動)
         self.status_label.config(text="正在搜尋 '01.png'...")
+        current_x, current_y = 0, 0
         try:
             base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
             image_path = os.path.join(base_path, "01.png")
             location = pyautogui.locateOnScreen(image_path, confidence=0.8)
             if location:
-                target_x = (location.left + location.width // 2) + 32 # 向右偏移 32
-                target_y = (location.top + location.height // 2) - 30 # 向上偏移 30
+                current_x = (location.left + location.width // 2) + 32
+                current_y = (location.top + location.height // 2) - 30
                 
-                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x}, {target_y})")
-                move_mouse_to(target_x, target_y) # --- 使用底層移動 ---
+                self.status_label.config(text=f"定位成功! 底層移動至 ({current_x}, {current_y})")
+                move_mouse_to(current_x, current_y)
                 time.sleep(0.8)
             else:
-                self.status_label.config(text="未找到圖片 '01.png'，跳過移動")
+                self.status_label.config(text="未找到圖片 '01.png'，後續偏移可能不準確")
+                pos = pyautogui.position()
+                current_x, current_y = pos.x, pos.y
                 time.sleep(1)
         except: pass
 
@@ -141,35 +153,32 @@ class CustomApp:
         send_key(SCAN_ALT, True)
         time.sleep(0.5)
 
-        # 9. 搜尋圖片 '02.png' 並移動滑鼠至中心偏移 (向右 32, 向上 60)
-        self.status_label.config(text="正在搜尋 '02.png'...")
-        try:
-            image_path_02 = os.path.join(base_path, "02.png")
-            location_02 = pyautogui.locateOnScreen(image_path_02, confidence=0.8)
-            if location_02:
-                target_x_02 = (location_02.left + location_02.width // 2) + 32
-                target_y_02 = (location_02.top + location_02.height // 2) - 60
-                
-                self.status_label.config(text=f"定位成功! 底層移動至 ({target_x_02}, {target_y_02})")
-                move_mouse_to(target_x_02, target_y_02)
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片 '02.png'，跳過步驟 9")
-                time.sleep(1)
-        except: pass
+        # 9. 延續第 8 步，向下偏移 60，再向左偏移 32，點擊左鍵，等待 1 秒
+        self.status_label.config(text="執行: 向下 60, 向左 32 並點擊左鍵")
+        current_x = current_x - 32 # 向左偏移 32
+        current_y = current_y + 60 # 向下偏移 60
+        move_mouse_to(current_x, current_y)
+        time.sleep(0.5)
+        mouse_left_click()
+        time.sleep(1.0) # 等待 1 秒
 
-        # 10. 壓住 Alt 並點擊右鍵 10 次，間隔 0.4 秒
-        self.status_label.config(text="執行: 壓住 Alt + 底層右鍵 10 次 (間隔 0.4s)")
-        send_key(SCAN_ALT, False)
+        # 10. 向右偏移 32，向上偏移 60，壓住 ALT 並點擊右鍵 7 次，間隔 0.4s
+        self.status_label.config(text="執行: 向右 32, 向上 60 並 Alt+右鍵 7 次")
+        current_x = current_x + 32 # 向右偏移 32
+        current_y = current_y - 60 # 向上偏移 60
+        move_mouse_to(current_x, current_y)
+        time.sleep(0.5)
+
+        send_key(SCAN_ALT, False) # 壓住 Alt
         time.sleep(0.3)
         
-        for k in range(10):
+        for k in range(7):
             if not self.is_running: break
-            self.status_label.config(text=f"右鍵點擊: {k+1}/10")
+            self.status_label.config(text=f"右鍵點擊: {k+1}/7")
             mouse_right_click()
             time.sleep(0.4) # 間隔 0.4 秒
             
-        send_key(SCAN_ALT, True)
+        send_key(SCAN_ALT, True) # 放開 Alt
         
         self.status_label.config(text="狀態: 執行完畢")
         self.is_running = False
