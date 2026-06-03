@@ -22,8 +22,8 @@ jobs:
         pip install pyinstaller pyautogui opencv-python pillow
 
     - name: Build EXE with PyInstaller
-      # 注意：這裡使用了兩次 --add-data 分別加入 01.png 和 ca2.png
-      run: pyinstaller --onefile --windowed --add-data "01.png;." --add-data "ca2.png;." --clean --noconfirm --name MyAutoTool app.py
+      # 這裡加入了 01, 02, ca2 三張圖片的封裝指令
+      run: pyinstaller --onefile --windowed --add-data "01.png;." --add-data "02.png;." --add-data "ca2.png;." --clean --noconfirm --name MyAutoTool app.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
