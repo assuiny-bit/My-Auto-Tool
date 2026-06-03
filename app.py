@@ -8,7 +8,7 @@ import pyautogui
 import os
 
 # =================================================================
-# C 強化版 V2.5：增加圖片中心左鍵點擊功能
+# C 強化版 V2.6：完整終極流程 (1-13 步)
 # =================================================================
 
 class KEYBDINPUT(ctypes.Structure):
@@ -35,6 +35,8 @@ MOUSEEVENTF_LEFTUP = 0x0004
 MOUSEEVENTF_RIGHTDOWN = 0x0008
 MOUSEEVENTF_RIGHTUP = 0x0010
 
+# 掃描碼定義
+SCAN_ESC = 0x01
 SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38
 
 try:
@@ -85,15 +87,15 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("按鍵助手 V2.5")
-        self.root.geometry("400x380")
+        self.root.title("終極按鍵助手 V2.6")
+        self.root.geometry("400x420")
         self.root.attributes("-topmost", True)
         self.is_running = False
         
-        tk.Label(root, text="新增: 圖片中心左鍵點擊功能", font=("Arial", 11, "bold")).pack(pady=10)
-        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11))
+        tk.Label(root, text="終極全流程 (1-13 步)", font=("Arial", 12, "bold")).pack(pady=10)
+        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue")
         self.status_label.pack(pady=20)
-        self.start_btn = tk.Button(root, text="開始執行", command=self.start, width=20, height=2, bg="#FF5722", fg="white")
+        self.start_btn = tk.Button(root, text="開始全流程", command=self.start, width=20, height=2, bg="#4CAF50", fg="white")
         self.start_btn.pack(pady=5)
 
     def start(self):
@@ -102,12 +104,36 @@ class CustomApp:
             self.start_btn.config(state="disabled")
             threading.Thread(target=self.run, daemon=True).start()
 
+    def find_and_click_with_offset(self, img_name, offset_x=0, offset_y=0, click_center=True):
+        try:
+            base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
+            image_path = os.path.join(base_path, img_name)
+            location = pyautogui.locateOnScreen(image_path, confidence=0.85)
+            if location:
+                cx = location.left + location.width // 2
+                cy = location.top + location.height // 2
+                if click_center:
+                    move_mouse_to(cx, cy)
+                    time.sleep(0.2)
+                    mouse_left_click()
+                    time.sleep(0.5)
+                
+                target_x = cx + offset_x
+                target_y = cy + offset_y
+                move_mouse_to(target_x, target_y)
+                time.sleep(0.5)
+                return True
+            return False
+        except: return False
+
     def run(self):
+        # 1. 倒數 3 秒
         for i in range(3, 0, -1):
             self.status_label.config(text=f"請切換視窗... {i}")
             time.sleep(1)
         
-        # 1-6 步
+        # 2-6 步: 基礎按鍵
+        self.status_label.config(text="執行: 步驟 2-6 (按鍵序列)")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(1.0)
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
@@ -115,49 +141,39 @@ class CustomApp:
             send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
 
-        # 7. 搜尋圖片並點擊，然後偏移
-        self.status_label.config(text="正在搜尋 '01.png'...")
-        try:
-            base_path = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
-            image_path = os.path.join(base_path, "01.png")
-            location = pyautogui.locateOnScreen(image_path, confidence=0.85)
-            if location:
-                # 取得中心點
-                center_x = location.left + location.width // 2
-                center_y = location.top + location.height // 2
-                
-                # A. 先移動到中心並點擊左鍵
-                self.status_label.config(text="定位成功! 點擊中心...")
-                move_mouse_to(center_x, center_y)
-                time.sleep(0.3)
-                mouse_left_click()
-                time.sleep(0.5)
-                
-                # B. 執行偏移定位 (右 28, 上 30)
-                target_x = center_x + 28
-                target_y = center_y - 30
-                self.status_label.config(text=f"執行偏移: 移動至 ({target_x}, {target_y})")
-                move_mouse_to(target_x, target_y)
-                time.sleep(0.8)
-            else:
-                self.status_label.config(text="未找到圖片，跳過移動")
-                time.sleep(1)
-        except: pass
+        # 7-8 步: 搜尋 01.png 並偏移 + Alt右鍵 20次
+        self.status_label.config(text="執行: 步驟 7-8 (01.png 偏移)")
+        if self.find_and_click_with_offset("01.png", 28, -30):
+            send_key(SCAN_ALT, False); time.sleep(0.2)
+            for k in range(20):
+                if not self.is_running: break
+                self.status_label.config(text=f"右鍵點擊 (01): {k+1}/20")
+                mouse_right_click(); time.sleep(0.6)
+            send_key(SCAN_ALT, True); time.sleep(0.5)
 
-        # 8. 壓住 Alt 並點擊右鍵 20 次
-        self.status_label.config(text="執行: 壓住 Alt + 右鍵 20 次")
-        send_key(SCAN_ALT, False)
-        time.sleep(0.3)
-        
-        for k in range(20):
-            if not self.is_running: break
-            self.status_label.config(text=f"右鍵點擊: {k+1}/20")
-            mouse_right_click()
-            time.sleep(0.6)
-            
-        send_key(SCAN_ALT, True)
-        
-        self.status_label.config(text="狀態: 執行完畢")
+        # 9-10 步: 搜尋 02.png 並偏移 + Alt右鍵 6次
+        self.status_label.config(text="執行: 步驟 9-10 (02.png 偏移)")
+        if self.find_and_click_with_offset("02.png", 28, -60):
+            send_key(SCAN_ALT, False); time.sleep(0.2)
+            for k in range(6):
+                if not self.is_running: break
+                self.status_label.config(text=f"右鍵點擊 (02): {k+1}/6")
+                mouse_right_click(); time.sleep(0.6)
+            send_key(SCAN_ALT, True); time.sleep(0.5)
+
+        # 11 步: 按下 Esc
+        self.status_label.config(text="執行: 步驟 11 (Esc)")
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
+
+        # 12 步: 搜尋 ca2.png 並點擊
+        self.status_label.config(text="執行: 步驟 12 (ca2.png)")
+        self.find_and_click_with_offset("ca2.png", 0, 0, click_center=True); time.sleep(0.5)
+
+        # 13 步: 按下 X
+        self.status_label.config(text="執行: 步驟 13 (X)")
+        send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
+
+        self.status_label.config(text="狀態: 全流程執行完畢")
         self.is_running = False
         self.start_btn.config(state="normal")
 
