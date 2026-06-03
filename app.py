@@ -8,7 +8,7 @@ import pyautogui
 import os
 
 # =================================================================
-# C 強化版 V3.2：完整步驟 1-13、停止按鈕、4小時循環與即時倒數
+# C 強化版 V3.3：重構步驟 12 (仿照步驟 7)、停止功能與 4小時循環
 # =================================================================
 
 class KEYBDINPUT(ctypes.Structure):
@@ -85,7 +85,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("自動化循環 V3.2")
+        self.root.title("自動化循環 V3.3")
         self.root.geometry("400x450")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -93,22 +93,17 @@ class CustomApp:
         self.cycle_count = 0
         
         tk.Label(root, text="自動化流程 (步驟 1-13)", font=("Arial", 12, "bold")).pack(pady=10)
-        
         self.cycle_label = tk.Label(root, text="目前執行次數: 0 / 6", font=("Arial", 10))
         self.cycle_label.pack(pady=5)
-        
         self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue")
         self.status_label.pack(pady=10)
-        
         self.countdown_label = tk.Label(root, text="下次執行倒數: --:--:--", font=("Consolas", 14, "bold"), fg="green")
         self.countdown_label.pack(pady=10)
         
         btn_frame = tk.Frame(root)
         btn_frame.pack(pady=15)
-        
         self.start_btn = tk.Button(btn_frame, text="開始執行", command=self.start, width=15, height=2, bg="#4CAF50", fg="white")
         self.start_btn.pack(side="left", padx=10)
-        
         self.stop_btn = tk.Button(btn_frame, text="停止執行", command=self.stop, width=15, height=2, bg="#f44336", fg="white", state="disabled")
         self.stop_btn.pack(side="left", padx=10)
 
@@ -176,6 +171,7 @@ class CustomApp:
             send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
 
+        # 7. 搜尋 01.png 並定位基準點
         self.status_label.config(text="正在搜尋 '01.png'...")
         base_x, base_y = 0, 0
         try:
@@ -191,16 +187,19 @@ class CustomApp:
                 base_x, base_y = pos.x, pos.y
         except: pass
 
+        # 8. 壓住 Alt 並點擊右鍵 20 次
         send_key(SCAN_ALT, False); time.sleep(0.3)
         for _ in range(20):
             if self.stop_requested: break
             mouse_right_click(); time.sleep(0.6)
         send_key(SCAN_ALT, True); time.sleep(0.5)
 
+        # 9. 相對偏移點擊 (左 32, 下 60)
         if self.stop_requested: return False
         move_mouse_to(base_x - 32, base_y + 60); time.sleep(0.5)
         mouse_left_click(); time.sleep(1.0)
 
+        # 10. 回到基準點, Alt + 右鍵 10 次
         if self.stop_requested: return False
         move_mouse_to(base_x, base_y); time.sleep(0.5)
         send_key(SCAN_ALT, False); time.sleep(0.3)
@@ -209,28 +208,40 @@ class CustomApp:
             mouse_right_click(); time.sleep(0.5)
         send_key(SCAN_ALT, True); time.sleep(0.5)
 
+        # 11. 相對偏移點擊 (左 32, 下 30) + ESC
         if self.stop_requested: return False
         move_mouse_to(base_x - 32, base_y + 30); time.sleep(0.5)
         mouse_left_click(); time.sleep(0.5)
-        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(3.0)
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True)
+        
+        # --- 步驟 11 完成後，延遲 3 秒 ---
+        self.status_label.config(text="等待介面穩定 (3秒)...")
+        time.sleep(3.0)
 
-        self.status_label.config(text="搜尋 'CLOSS.png' (強化搜尋中)...")
-        found_closs = False
+        # 12. 搜尋 'ca2.png' (仿照步驟 7 的結構)
+        if self.stop_requested: return False
+        self.status_label.config(text="正在搜尋 'ca2.png'...")
         try:
-            image_path_closs = os.path.join(base_path, "CLOSS.png")
-            for attempt in range(10):
-                if self.stop_requested: break
-                conf = 0.7 if attempt < 5 else 0.6
-                location_closs = pyautogui.locateOnScreen(image_path_closs, confidence=conf, grayscale=True)
-                if location_closs:
-                    cx = location_closs.left + location_closs.width // 2
-                    cy = location_closs.top + location_closs.height // 2
-                    move_mouse_to(cx + 20, cy); time.sleep(0.3); mouse_left_click(); time.sleep(0.5)
-                    move_mouse_to(cx + 40, cy); time.sleep(0.3); mouse_left_click(); time.sleep(1.0)
-                    found_closs = True; break
+            image_path_ca2 = os.path.join(base_path, "ca2.png")
+            location_ca2 = pyautogui.locateOnScreen(image_path_ca2, confidence=0.8)
+            if location_ca2:
+                # 移動到正中心後，向右 150，向下 60
+                tx_ca2 = (location_ca2.left + location_ca2.width // 2) + 150
+                ty_ca2 = (location_ca2.top + location_ca2.height // 2) + 60
+                
+                self.status_label.config(text=f"定位 ca2 成功! 執行偏移點擊")
+                move_mouse_to(tx_ca2, ty_ca2)
                 time.sleep(0.5)
+                mouse_left_click()
+                
+                # 點擊後等待 1 秒
+                time.sleep(1.0)
+            else:
+                self.status_label.config(text="未找到圖片 'ca2.png'")
+                time.sleep(1.5)
         except: pass
 
+        # 13. 按 X 鍵
         if self.stop_requested: return False
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(0.5)
         return True
