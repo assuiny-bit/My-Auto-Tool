@@ -1,4 +1,4 @@
-name: Build-Final-V7
+name: Build-Final-Tool
 on: [push, workflow_dispatch]
 jobs:
   build:
@@ -15,15 +15,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # 必須包含 opencv-python 確保圖片辨識與容量正常
+          # 必須包含 opencv-python 確保圖片搜尋功能與檔案容量正確
           pip install pyinstaller pyautogui pillow opencv-python
 
       - name: Build executable
-        # 確保圖片被正確封裝進 EXE
+        # 這裡會將 01.png 和 ca2.png 兩張圖都封裝進去
         run: pyinstaller --onefile --noconsole --clean --add-data "01.png;." --add-data "ca2.png;." app.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Full-Auto-Tool-V7
+          name: Full-Auto-Tool
           path: dist/app.exe
