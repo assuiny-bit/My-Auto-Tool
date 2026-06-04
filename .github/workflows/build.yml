@@ -22,7 +22,6 @@ jobs:
         pip install pyinstaller pyautogui opencv-python pillow
 
     - name: Build EXE with PyInstaller
-      # 這裡包含了您所有的圖片檔名，請確保您的 GitHub 專案目錄下有這些檔案
       run: |
         pyinstaller --onefile --windowed \
         --add-data "01.png;." \
