@@ -9,10 +9,9 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.1：任務切換系統 + 製作箭流程整合
+# 終極自動化工具 V3.1 - 最終驗證版 (修正符號格式)
 # =================================================================
 
-# ==================== Windows API 結構定義 ====================
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
@@ -31,7 +30,6 @@ class INPUT_UNION(ctypes.Union):
 class INPUT(ctypes.Structure):
     _fields_ = [("type", ctypes.c_ulong), ("union", INPUT_UNION)]
 
-# ==================== 常數定義 ====================
 INPUT_MOUSE = 0
 INPUT_KEYBOARD = 1
 KEYEVENTF_SCANCODE = 0x0008
@@ -44,16 +42,13 @@ MOUSEEVENTF_LEFTUP = 0x0004
 MOUSEEVENTF_RIGHTDOWN = 0x0008
 MOUSEEVENTF_RIGHTUP = 0x0010
 
-# 掃描碼定義
 SCAN_ESC = 0x01
 SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38
 SCAN_7 = 0x08; SCAN_3 = 0x04; SCAN_0 = 0x0B
 
-# 視窗顯示常數
 SW_RESTORE = 9
 SW_MINIMIZE = 6
 
-# ==================== 初始化 Windows API ====================
 try:
     win32u = ctypes.WinDLL("win32u.dll", use_last_error=True)
     NtUserSendInput = win32u.NtUserSendInput
@@ -69,7 +64,6 @@ user32.WindowFromPoint.restype = ctypes.c_void_p
 user32.ShowWindow.argtypes = [ctypes.c_void_p, ctypes.c_int]
 user32.SetForegroundWindow.argtypes = [ctypes.c_void_p]
 
-# ==================== 輸入函數 ====================
 def send_input(ii):
     if NtUserSendInput:
         NtUserSendInput(1, ctypes.byref(ii), ctypes.sizeof(ii))
@@ -94,16 +88,13 @@ def mouse_left_click(clicks=1):
         if clicks > 1: time.sleep(0.1)
 
 def mouse_drag(offset_x, offset_y):
-    # 按下左鍵
     mi_down = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTDOWN, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
     time.sleep(0.2)
-    # 獲取當前位置並移動
     pt = POINT()
     user32.GetCursorPos(ctypes.byref(pt))
     move_mouse_to(pt.x + offset_x, pt.y + offset_y)
     time.sleep(0.2)
-    # 放開左鍵
     mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTUP, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
 
@@ -114,33 +105,27 @@ def send_key(scancode, is_up=False, is_extended=False):
     ki = KEYBDINPUT(wVk=0, wScan=scancode, dwFlags=flags, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_KEYBOARD, union=INPUT_UNION(ki=ki)))
 
-# ==================== 主應用程式類別 ====================
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.1 - 任務切換版")
+        self.root.title("終極自動化工具 V3.1")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
-        
         self.is_running = False
         self.stop_event = threading.Event()
-        self.current_task = "STORAGE"  # 預設任務：倒數存倉
-        
-        # UI 顏色設定
+        self.current_task = "STORAGE"
         self.COLOR_SELECTED = "#2196F3"
         self.COLOR_NORMAL = "#E1E1E1"
         
-        # ==================== 任務選擇區 ====================
-        task_frame = tk.LabelFrame(root, text="任務選擇 (請先選擇任務再點擊開始)", font=("Arial", 10, "bold"), padx=10, pady=10)
+        # 任務選擇區
+        task_frame = tk.LabelFrame(root, text="任務選擇", font=("Arial", 10, "bold"), padx=10, pady=10)
         task_frame.pack(padx=10, pady=10, fill="x")
-        
         self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉 (1-13步)", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
         self.btn_task_storage.pack(side="left", padx=5, expand=True)
-        
         self.btn_task_arrow = tk.Button(task_frame, text="🏹 製作箭流程", command=lambda: self.select_task("ARROW"), width=25, height=2, bg=self.COLOR_NORMAL, fg="black")
         self.btn_task_arrow.pack(side="left", padx=5, expand=True)
         
-        # ==================== 句柄管理區 ====================
+        # 句柄管理區
         hwnd_frame = tk.LabelFrame(root, text="句柄管理", font=("Arial", 10, "bold"), padx=10, pady=10)
         hwnd_frame.pack(padx=10, pady=10, fill="x")
         self.hwnd_entries = []
@@ -150,24 +135,20 @@ class CustomApp:
             entry = tk.Entry(row, width=20); entry.pack(side="left", padx=5); self.hwnd_entries.append(entry)
             tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
         
-        # ==================== 參數設定區 ====================
+        # 參數設定區
         param_frame = tk.LabelFrame(root, text="執行參數", font=("Arial", 10, "bold"), padx=10, pady=10)
         param_frame.pack(padx=10, pady=10, fill="x")
-        
         row1 = tk.Frame(param_frame); row1.pack(fill="x", pady=5)
         tk.Label(row1, text="循環間隔 (小時):", width=15).pack(side="left")
         self.interval_entry = tk.Entry(row1, width=10); self.interval_entry.insert(0, "4"); self.interval_entry.pack(side="left", padx=5)
-        
         row2 = tk.Frame(param_frame); row2.pack(fill="x", pady=5)
         tk.Label(row2, text="執行次數 (0=無限):", width=15).pack(side="left")
         self.cycles_entry = tk.Entry(row2, width=10); self.cycles_entry.insert(0, "0"); self.cycles_entry.pack(side="left", padx=5)
         
-        # ==================== 狀態與控制區 ====================
         self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue", pady=10); self.status_label.pack()
         self.countdown_label = tk.Label(root, text="倒數: 00:00:00", font=("Arial", 11), fg="darkgreen"); self.countdown_label.pack()
-        
         self.start_btn = tk.Button(root, text="▶ 開始執行", command=self.start, width=30, height=2, bg="#4CAF50", fg="white", font=("Arial", 10, "bold")); self.start_btn.pack(pady=5)
-        self.stop_btn = tk.Button(root, text="⏹ 強制停止所有動作", command=self.stop, width=30, height=2, bg="#F44336", fg="white", state="disabled"); self.stop_btn.pack(pady=5)
+        self.stop_btn = tk.Button(root, text="⏹ 強制停止", command=self.stop, width=30, height=2, bg="#F44336", fg="white", state="disabled"); self.stop_btn.pack(pady=5)
 
     def select_task(self, task):
         self.current_task = task
@@ -177,7 +158,6 @@ class CustomApp:
         else:
             self.btn_task_arrow.config(bg=self.COLOR_SELECTED, fg="white")
             self.btn_task_storage.config(bg=self.COLOR_NORMAL, fg="black")
-        self.status_label.config(text=f"已選擇任務: {'倒數存倉' if task=='STORAGE' else '製作箭'}")
 
     def start_get_hwnd(self, index):
         threading.Thread(target=self.get_hwnd_countdown, args=(index,), daemon=True).start()
@@ -185,12 +165,12 @@ class CustomApp:
     def get_hwnd_countdown(self, index):
         self.hwnd_entries[index].config(state="disabled")
         for i in range(3, 0, -1):
-            self.status_label.config(text=f"請將滑鼠移至視窗 {chr(65+index)}... {i}", fg="orange"); time.sleep(1)
+            self.status_label.config(text=f"請移至視窗 {chr(65+index)}... {i}"); time.sleep(1)
         pt = POINT(); user32.GetCursorPos(ctypes.byref(pt))
         hwnd = user32.WindowFromPoint(pt)
         self.hwnd_entries[index].config(state="normal")
         self.hwnd_entries[index].delete(0, tk.END); self.hwnd_entries[index].insert(0, f"0x{hwnd:08X}")
-        self.status_label.config(text=f"✓ 已獲取句柄 {chr(65+index)}: 0x{hwnd:08X}", fg="green")
+        self.status_label.config(text=f"✓ 已獲取句柄: 0x{hwnd:08X}", fg="green")
 
     def find_and_click(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
         if self.stop_event.is_set(): return False
@@ -201,77 +181,55 @@ class CustomApp:
             if loc:
                 cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
                 move_mouse_to(cx + offset_x, cy + offset_y); time.sleep(0.2)
-                if drag_x != 0 or drag_y != 0:
-                    mouse_drag(drag_x, drag_y)
-                else:
-                    mouse_left_click(clicks)
+                if drag_x != 0 or drag_y != 0: mouse_drag(drag_x, drag_y)
+                else: mouse_left_click(clicks)
                 time.sleep(0.5); return True
             return False
         except: return False
 
     def task_storage_13(self):
-        """原本的 1-13 步流程"""
         for i in range(3, 0, -1):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"準備中... {i}"); time.sleep(1)
-        
-        # 2-6
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(1.0)
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
-        
-        # 7-8 (01.png)
         if self.find_and_click("01", 28, -30):
             send_key(SCAN_ALT, False); time.sleep(0.2)
             for k in range(20):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"右鍵點擊 (01): {k+1}/20"); mouse_right_click(); time.sleep(0.6)
+                mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
-        
-        # 9-10 (02.png)
         if self.find_and_click("02", 28, -60):
             send_key(SCAN_ALT, False); time.sleep(0.2)
             for k in range(6):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"右鍵點擊 (02): {k+1}/6"); mouse_right_click(); time.sleep(0.6)
+                mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
-            
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
         self.find_and_click("ca2")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
     def task_arrow_making(self):
-        """新流程：製作箭"""
-        self.status_label.config(text="執行: 製作箭流程")
-        # 1-2
         if not self.find_and_click("buynpc"): return False
         if not self.find_and_click("buybuy"): return False
-        # 3 (dd 向上偏移5, 左鍵2下)
         if not self.find_and_click("dd", 0, -5, clicks=2): return False
-        # 4 (ee 拖曳向右100, 30次)
         for k in range(30):
             if self.stop_event.is_set(): return False
-            self.status_label.config(text=f"拖曳 ee: {k+1}/30")
             if not self.find_and_click("ee", drag_x=100): break
-        # 5-6
         if not self.find_and_click("ff"): return False
         send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
-        # 7 (ee 左鍵2下, 30次)
         for k in range(30):
             if self.stop_event.is_set(): return False
-            self.status_label.config(text=f"點擊 ee: {k+1}/30")
             if not self.find_and_click("ee", clicks=2): break
-        # 8-10
         if not self.find_and_click("change"): return False
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        # 11 (hh 拖曳向右100)
         if not self.find_and_click("hh", drag_x=100): return False
-        # 12-14
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_0); time.sleep(0.1); send_key(SCAN_0, True); time.sleep(0.5)
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
@@ -283,20 +241,18 @@ class CustomApp:
             self.interval = float(self.interval_entry.get())
             self.total_cycles = int(self.cycles_entry.get())
         except: messagebox.showerror("錯誤", "請輸入有效數字"); return
-        
         hwnds = []
         for i, e in enumerate(self.hwnd_entries):
             val = e.get().strip()
             if val: hwnds.append((i, int(val, 16) if val.lower().startswith("0x") else int(val)))
         if not hwnds: messagebox.showerror("錯誤", "至少需一個句柄"); return
-        
         self.is_running = True; self.stop_event.clear()
         self.start_btn.config(state="disabled"); self.stop_btn.config(state="normal")
         threading.Thread(target=self.run_loop, args=(hwnds,), daemon=True).start()
 
     def stop(self):
         self.stop_event.set(); self.is_running = False
-        self.status_label.config(text="狀態: 已強制停止", fg="red")
+        self.status_label.config(text="狀態: 已停止", fg="red")
         self.start_btn.config(state="normal"); self.stop_btn.config(state="disabled")
 
     def run_loop(self, hwnds):
@@ -306,18 +262,15 @@ class CustomApp:
             cycle += 1
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
-                self.status_label.config(text=f"循環 {cycle} - 視窗 {chr(65+idx)}")
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                
                 success = self.task_storage_13() if self.current_task == "STORAGE" else self.task_arrow_making()
                 if not success: break
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
-            
             if self.stop_event.is_set(): break
-            self.status_label.config(text=f"第 {cycle} 次完成，等待中..."); wait = int(self.interval * 3600)
+            wait = int(self.interval * 3600)
             while wait > 0 and not self.stop_event.is_set():
                 h, r = divmod(wait, 3600); m, s = divmod(r, 60)
-                self.countdown_label.config(text=f"倒數: {h:02}:{m:02}:{seconds:02}"); time.sleep(1); wait -= 1
+                self.countdown_label.config(text=f"倒數: {h:02}:{m:02}:{s:02}"); time.sleep(1); wait -= 1
         self.stop()
 
 if __name__ == "__main__":
