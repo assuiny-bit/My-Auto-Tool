@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.2 - 任務切換版 (拖曳距離修正為 300)
+# 終極自動化工具 V3.3 - 任務切換最終版 (修正大循環與按鍵7邏輯)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.2")
+        self.root.title("終極自動化工具 V3.3")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -220,17 +220,24 @@ class CustomApp:
         return True
 
     def task_arrow_making(self):
-        if not self.find_and_click("buynpc"): return False
-        if not self.find_and_click("buybuy"): return False
-        if not self.find_and_click("dd", 0, -5, clicks=2): return False
-        for k in range(30):
+        # 1. 【核心大循環】(重複執行 30 次)
+        for cycle in range(30):
             if self.stop_event.is_set(): return False
-            if not self.find_and_click("ee", drag_x=300): break
-        if not self.find_and_click("ff"): return False
-        send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
-        for k in range(30):
+            self.status_label.config(text=f"製作箭大循環: {cycle+1}/30")
+            if not self.find_and_click("buynpc"): return False
+            if not self.find_and_click("buybuy"): return False
+            if not self.find_and_click("dd", 0, -5, clicks=2): return False
+            if not self.find_and_click("ee", drag_x=300): return False
+            if not self.find_and_click("ff"): return False
+            
+        # 2. 【強化動作】(重複執行 30 次)
+        for cycle in range(30):
             if self.stop_event.is_set(): return False
+            self.status_label.config(text=f"強化動作: {cycle+1}/30")
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.3)
             if not self.find_and_click("ee", clicks=2): break
+            
+        # 3. 後續固定步驟
         if not self.find_and_click("change"): return False
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
