@@ -225,7 +225,7 @@ class CustomApp:
         if not self.find_and_click("dd", 0, -5, clicks=2): return False
         for k in range(30):
             if self.stop_event.is_set(): return False
-            if not self.find_and_click("ee", drag_x=300): break # 修正為 300
+            if not self.find_and_click("ee", drag_x=300): break
         if not self.find_and_click("ff"): return False
         send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
         for k in range(30):
@@ -235,7 +235,7 @@ class CustomApp:
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        if not self.find_and_click("hh", drag_x=300): return False # 修正為 300
+        if not self.find_and_click("hh", drag_x=300): return False
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_0); time.sleep(0.1); send_key(SCAN_0, True); time.sleep(0.5)
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
@@ -281,43 +281,3 @@ class CustomApp:
 
 if __name__ == "__main__":
     root = tk.Tk(); app = CustomApp(root); root.mainloop()
-```
-
-請同步使用下方的**單行版打包碼**，這樣就能確保打包成功：
-
-```yaml
-name: Build EXE
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller pyautogui opencv-python pillow
-
-    - name: Build EXE with PyInstaller
-      run: pyinstaller --onefile --windowed --add-data "01.png;." --add-data "02.png;." --add-data "ca2.png;." --add-data "buynpc.png;." --add-data "buybuy.png;." --add-data "dd.png;." --add-data "ee.png;." --add-data "ff.png;." --add-data "change.png;." --add-data "hh.png;." --add-data "over.png;." --clean --noconfirm --name MyAutoTool app.py
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyAutoTool-Windows-EXE
-        path: dist/MyAutoTool.exe
-        retention-days: 30
-```
-
-祝您測試順利！如有任何問題，我就在這裡。
