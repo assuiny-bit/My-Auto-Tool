@@ -208,6 +208,7 @@ class CustomApp:
 
     def get_hwnd_countdown(self, index):
         """倒數 3 秒後自動抓取滑鼠所在視窗的句柄"""
+        # 倒數期間鎖定輸入框，避免誤觸
         self.hwnd_entries[index].config(state="disabled")
         for i in range(3, 0, -1):
             self.status_label.config(text=f"請將滑鼠移至視窗 {chr(65+index)}... {i}", fg="orange")
@@ -219,13 +220,13 @@ class CustomApp:
         # 獲取該座標的視窗句柄
         hwnd = user32.WindowFromPoint(pt)
         
-        # 將句柄轉為 16 進位顯示在輸入框中
+        # 【修正】先解除鎖定，才能自動填入文字
+        self.hwnd_entries[index].config(state="normal")
         self.hwnd_entries[index].delete(0, tk.END)
         self.hwnd_entries[index].insert(0, f"0x{hwnd:08X}")
         self.hwnd_list[index] = hwnd
         
         self.status_label.config(text=f"✓ 已成功獲取句柄 {chr(65+index)}: 0x{hwnd:08X}", fg="green")
-        self.hwnd_entries[index].config(state="normal")
 
     # ==================== 視窗控制功能 ====================
     def bring_to_foreground(self, hwnd):
