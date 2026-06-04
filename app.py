@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.1 - 最終驗證版 (修正符號格式)
+# 終極自動化工具 V3.2 - 任務切換版 (拖曳距離修正為 300)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -87,6 +87,15 @@ def mouse_left_click(clicks=1):
         send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
         if clicks > 1: time.sleep(0.1)
 
+def mouse_right_click(clicks=1):
+    for _ in range(clicks):
+        mi_down = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_RIGHTDOWN, time=0, dwExtraInfo=None)
+        send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
+        time.sleep(random.uniform(0.05, 0.1))
+        mi_up = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_RIGHTUP, time=0, dwExtraInfo=None)
+        send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_up)))
+        if clicks > 1: time.sleep(0.1)
+
 def mouse_drag(offset_x, offset_y):
     mi_down = MOUSEINPUT(dx=0, dy=0, mouseData=0, dwFlags=MOUSEEVENTF_LEFTDOWN, time=0, dwExtraInfo=None)
     send_input(INPUT(type=INPUT_MOUSE, union=INPUT_UNION(mi=mi_down)))
@@ -108,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.1")
+        self.root.title("終極自動化工具 V3.2")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -117,7 +126,6 @@ class CustomApp:
         self.COLOR_SELECTED = "#2196F3"
         self.COLOR_NORMAL = "#E1E1E1"
         
-        # 任務選擇區
         task_frame = tk.LabelFrame(root, text="任務選擇", font=("Arial", 10, "bold"), padx=10, pady=10)
         task_frame.pack(padx=10, pady=10, fill="x")
         self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉 (1-13步)", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
@@ -125,7 +133,6 @@ class CustomApp:
         self.btn_task_arrow = tk.Button(task_frame, text="🏹 製作箭流程", command=lambda: self.select_task("ARROW"), width=25, height=2, bg=self.COLOR_NORMAL, fg="black")
         self.btn_task_arrow.pack(side="left", padx=5, expand=True)
         
-        # 句柄管理區
         hwnd_frame = tk.LabelFrame(root, text="句柄管理", font=("Arial", 10, "bold"), padx=10, pady=10)
         hwnd_frame.pack(padx=10, pady=10, fill="x")
         self.hwnd_entries = []
@@ -135,7 +142,6 @@ class CustomApp:
             entry = tk.Entry(row, width=20); entry.pack(side="left", padx=5); self.hwnd_entries.append(entry)
             tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
         
-        # 參數設定區
         param_frame = tk.LabelFrame(root, text="執行參數", font=("Arial", 10, "bold"), padx=10, pady=10)
         param_frame.pack(padx=10, pady=10, fill="x")
         row1 = tk.Frame(param_frame); row1.pack(fill="x", pady=5)
@@ -219,7 +225,7 @@ class CustomApp:
         if not self.find_and_click("dd", 0, -5, clicks=2): return False
         for k in range(30):
             if self.stop_event.is_set(): return False
-            if not self.find_and_click("ee", drag_x=100): break
+            if not self.find_and_click("ee", drag_x=300): break # 修正為 300
         if not self.find_and_click("ff"): return False
         send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
         for k in range(30):
@@ -229,7 +235,7 @@ class CustomApp:
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        if not self.find_and_click("hh", drag_x=100): return False
+        if not self.find_and_click("hh", drag_x=300): return False # 修正為 300
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_0); time.sleep(0.1); send_key(SCAN_0, True); time.sleep(0.5)
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
@@ -275,3 +281,43 @@ class CustomApp:
 
 if __name__ == "__main__":
     root = tk.Tk(); app = CustomApp(root); root.mainloop()
+```
+
+請同步使用下方的**單行版打包碼**，這樣就能確保打包成功：
+
+```yaml
+name: Build EXE
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller pyautogui opencv-python pillow
+
+    - name: Build EXE with PyInstaller
+      run: pyinstaller --onefile --windowed --add-data "01.png;." --add-data "02.png;." --add-data "ca2.png;." --add-data "buynpc.png;." --add-data "buybuy.png;." --add-data "dd.png;." --add-data "ee.png;." --add-data "ff.png;." --add-data "change.png;." --add-data "hh.png;." --add-data "over.png;." --clean --noconfirm --name MyAutoTool app.py
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyAutoTool-Windows-EXE
+        path: dist/MyAutoTool.exe
+        retention-days: 30
+```
+
+祝您測試順利！如有任何問題，我就在這裡。
