@@ -22,20 +22,7 @@ jobs:
         pip install pyinstaller pyautogui opencv-python pillow
 
     - name: Build EXE with PyInstaller
-      run: |
-        pyinstaller --onefile --windowed \
-        --add-data "01.png;." \
-        --add-data "02.png;." \
-        --add-data "ca2.png;." \
-        --add-data "buynpc.png;." \
-        --add-data "buybuy.png;." \
-        --add-data "dd.png;." \
-        --add-data "ee.png;." \
-        --add-data "ff.png;." \
-        --add-data "change.png;." \
-        --add-data "hh.png;." \
-        --add-data "over.png;." \
-        --clean --noconfirm --name MyAutoTool app.py
+      run: pyinstaller --onefile --windowed --add-data "01.png;." --add-data "02.png;." --add-data "ca2.png;." --add-data "buynpc.png;." --add-data "buybuy.png;." --add-data "dd.png;." --add-data "ee.png;." --add-data "ff.png;." --add-data "change.png;." --add-data "hh.png;." --add-data "over.png;." --clean --noconfirm --name MyAutoTool app.py
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
