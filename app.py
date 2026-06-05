@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.8 - 任務切換版 (恢復 0.5s 穩定延遲)
+# 終極自動化工具 V3.9 - 任務切換版 (強化動作新節奏)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.8")
+        self.root.title("終極自動化工具 V3.9")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -238,7 +238,7 @@ class CustomApp:
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def task_arrow_v38(self):
+    def task_arrow_v39(self):
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作箭大循環: {cycle+1}/25")
@@ -248,13 +248,23 @@ class CustomApp:
             if not self.find_and_click_v33("ii", 0, -30, drag_x=300): return False
             if not self.find_and_click_v33("ff"): return False
             
+        # 🌟 V3.9 新節奏強化動作：2s -> 按7(1s) -> 雙擊ee(1s) -> 等待(1s) x25
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"強化動作: {cycle+1}/25")
-            # 🌟 調整處：恢復 0.5 秒穩定延遲
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
+            
+            # 步驟 1: 等待 2 秒
+            time.sleep(2)
+            
+            # 步驟 2: 按數字鍵 7 後等待 1 秒
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(1)
+            
+            # 步驟 3: 尋找 ee 並雙擊，然後等待 1 秒
             if not self.find_and_click_v33("ee", clicks=2): break
-            time.sleep(0.5)
+            time.sleep(1)
+            
+            # 步驟 4: 等待 1 秒確保動作完成後再進入下一次循環
+            time.sleep(1)
             
         if not self.find_and_click_v33("change"): return False
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
@@ -294,7 +304,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v38()
+                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v39()
                 if not success: break
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
