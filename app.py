@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V4.1 - 順暢加速版 (節奏：1s -> 0.5s -> 0.5s -> 0.5s)
+# 終極自動化工具 V4.2 - 穩定緩衝版 (大循環後等待 7 秒)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V4.1")
+        self.root.title("終極自動化工具 V4.2")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -193,8 +193,7 @@ class CustomApp:
             return False
         except: return False
 
-    def find_and_click_v41(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
-        """順暢版：找不到圖片也不會報錯或中斷，只會回傳 False 並讓程式繼續"""
+    def find_and_click_v42(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
         if self.stop_event.is_set(): return False
         try:
             base = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
@@ -235,47 +234,51 @@ class CustomApp:
                 mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
-        self.find_and_click_v41("ca2")
+        self.find_and_click_v42("ca2")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def task_arrow_v41(self):
+    def task_arrow_v42(self):
         # 1. 製作箭大循環 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作箭大循環: {cycle+1}/25")
-            self.find_and_click_v41("buynpc")
-            self.find_and_click_v41("buybuy")
-            self.find_and_click_v41("dd", 0, -5, clicks=2)
-            self.find_and_click_v41("ii", 0, -30, drag_x=300)
-            self.find_and_click_v41("ff")
+            self.find_and_click_v42("buynpc")
+            self.find_and_click_v42("buybuy")
+            self.find_and_click_v42("dd", 0, -5, clicks=2)
+            self.find_and_click_v42("ii", 0, -30, drag_x=300)
+            self.find_and_click_v42("ff")
             
-        # 2. 流程動作 (25次) - 最新加速節奏
+        # 🌟 調整處：大循環完成後，先等待 7 秒再繼續
+        self.status_label.config(text="大循環完成，等待緩衝 7 秒...")
+        time.sleep(7)
+            
+        # 2. 流程動作 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"流程動作: {cycle+1}/25")
             time.sleep(1) # 1. 等待 1 秒
             send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5) # 2. 按 7 並等待 0.5 秒
-            self.find_and_click_v41("ee", clicks=2) # 3. 尋找 ee 並雙擊
+            self.find_and_click_v42("ee", clicks=2) # 3. 尋找 ee 並雙擊
             time.sleep(0.5) # 3. 雙擊後等待 0.5 秒
             time.sleep(0.5) # 4. 等待 0.5 秒確保動作完成
             
-        # 3. 變更設定 (步驟 8-10) - 強制順序執行
+        # 3. 變更設定 (步驟 8-10)
         self.status_label.config(text="正在執行變更設定...")
-        self.find_and_click_v41("change")
+        self.find_and_click_v42("change")
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         
-        # 4. 數量設定 (步驟 11-13) - 強制順序執行
+        # 4. 數量設定 (步驟 11-13)
         self.status_label.config(text="正在執行數量設定...")
-        self.find_and_click_v41("hh", drag_x=300)
+        self.find_and_click_v42("hh", drag_x=300)
         send_key(SCAN_2); time.sleep(0.1); send_key(SCAN_2, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
         
         # 5. 完成收尾
-        self.find_and_click_v41("over")
+        self.find_and_click_v42("over")
         return True
 
     def start(self):
@@ -305,13 +308,10 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                # 執行任務 (順順走，不因圖片缺失中斷)
                 if self.current_task == "STORAGE": self.task_storage_v30()
-                else: self.task_arrow_v41()
-                # 任務結束後，強制執行最小化
+                else: self.task_arrow_v42()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
-            # 視窗輪完，進入小時制倒數
             wait = int(self.interval * 3600)
             while wait > 0 and not self.stop_event.is_set():
                 h, r = divmod(wait, 3600); m, s = divmod(r, 60)
