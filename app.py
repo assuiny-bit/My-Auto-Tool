@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.6 - 任務切換版 (修正次數 25, 加入延遲)
+# 終極自動化工具 V3.8 - 任務切換版 (恢復 0.5s 穩定延遲)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.6")
+        self.root.title("終極自動化工具 V3.8")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -238,8 +238,7 @@ class CustomApp:
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def task_arrow_v36(self):
-        # 1. 【核心大循環】(重複執行 25 次)
+    def task_arrow_v38(self):
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作箭大循環: {cycle+1}/25")
@@ -249,23 +248,19 @@ class CustomApp:
             if not self.find_and_click_v33("ii", 0, -30, drag_x=300): return False
             if not self.find_and_click_v33("ff"): return False
             
-        # 2. 【強化動作】(重複執行 25 次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"強化動作: {cycle+1}/25")
-            # 🌟 調整處：按 7 後等待 1 秒
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(1.0)
-            # 🌟 調整處：雙擊 ee 後等待 1 秒
+            # 🌟 調整處：恢復 0.5 秒穩定延遲
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
             if not self.find_and_click_v33("ee", clicks=2): break
-            time.sleep(1.0)
+            time.sleep(0.5)
             
-        # 3. 後續固定步驟
         if not self.find_and_click_v33("change"): return False
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         if not self.find_and_click_v33("hh", drag_x=300): return False
-        # 🌟 調整處：按數字鍵 2 與 5
         send_key(SCAN_2); time.sleep(0.1); send_key(SCAN_2, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
@@ -299,7 +294,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v36()
+                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v38()
                 if not success: break
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
