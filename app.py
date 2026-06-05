@@ -273,7 +273,7 @@ class CustomApp:
         # 4. 數量設定 (步驟 11-13)
         self.status_label.config(text="正在執行數量設定...")
         self.find_and_click_v42("hh", drag_x=300)
-        send_key(SCAN_2); time.sleep(0.1); send_key(SCAN_2, True); time.sleep(0.3)
+        send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
         
