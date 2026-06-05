@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.3 - 任務切換最終版 (修正大循環與按鍵7邏輯)
+# 終極自動化工具 V3.4 - 任務切換版 (還原 V3.0 完美存倉邏輯)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.3")
+        self.root.title("終極自動化工具 V3.4")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -178,7 +178,25 @@ class CustomApp:
         self.hwnd_entries[index].delete(0, tk.END); self.hwnd_entries[index].insert(0, f"0x{hwnd:08X}")
         self.status_label.config(text=f"✓ 已獲取句柄: 0x{hwnd:08X}", fg="green")
 
-    def find_and_click(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
+    # ==================== 引用 V3.0 完美圖片點擊邏輯 ====================
+    def find_and_click_v30(self, img_name, offset_x=0, offset_y=0, click_center=True):
+        if self.stop_event.is_set(): return False
+        try:
+            base = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
+            # 確保與 V3.0 一樣搜尋 .png
+            path = os.path.join(base, f"{img_name}.png") if not img_name.endswith(".png") else os.path.join(base, img_name)
+            loc = pyautogui.locateOnScreen(path, confidence=0.85)
+            if loc:
+                cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
+                if click_center:
+                    move_mouse_to(cx, cy); time.sleep(0.2); mouse_left_click(); time.sleep(0.5)
+                move_mouse_to(cx + offset_x, cy + offset_y); time.sleep(0.5)
+                return True
+            return False
+        except: return False
+
+    # ==================== 引用 V3.3 新版圖片點擊邏輯 (用於製作箭) ====================
+    def find_and_click_v33(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
         if self.stop_event.is_set(): return False
         try:
             base = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
@@ -193,60 +211,69 @@ class CustomApp:
             return False
         except: return False
 
-    def task_storage_13(self):
+    # ==================== 引用 V3.0 完美存倉流程 ====================
+    def task_storage_v30(self):
         for i in range(3, 0, -1):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"準備中... {i}"); time.sleep(1)
+        
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(1.0)
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
-        for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
+        for _ in range(2):
+            if self.stop_event.is_set(): return False
+            send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
-        if self.find_and_click("01", 28, -30):
+        
+        # 步驟 7-8: 搜尋 01.png
+        if self.find_and_click_v30("01.png", 28, -30):
             send_key(SCAN_ALT, False); time.sleep(0.2)
             for k in range(20):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                self.status_label.config(text=f"右鍵點擊 (01): {k+1}/20")
                 mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
-        if self.find_and_click("02", 28, -60):
+            
+        # 步驟 9-10: 搜尋 02.png (完美版邏輯)
+        if self.find_and_click_v30("02.png", 28, -60):
             send_key(SCAN_ALT, False); time.sleep(0.2)
             for k in range(6):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                self.status_label.config(text=f"右鍵點擊 (02): {k+1}/6")
                 mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
+            
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
-        self.find_and_click("ca2")
+        self.find_and_click_v33("ca2")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def task_arrow_making(self):
-        # 1. 【核心大循環】(重複執行 30 次)
+    # ==================== 引用 V3.3 最新製作箭流程 ====================
+    def task_arrow_v33(self):
         for cycle in range(30):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作箭大循環: {cycle+1}/30")
-            if not self.find_and_click("buynpc"): return False
-            if not self.find_and_click("buybuy"): return False
-            if not self.find_and_click("dd", 0, -5, clicks=2): return False
-            if not self.find_and_click("ee", drag_x=300): return False
-            if not self.find_and_click("ff"): return False
+            if not self.find_and_click_v33("buynpc"): return False
+            if not self.find_and_click_v33("buybuy"): return False
+            if not self.find_and_click_v33("dd", 0, -5, clicks=2): return False
+            if not self.find_and_click_v33("ee", drag_x=300): return False
+            if not self.find_and_click_v33("ff"): return False
             
-        # 2. 【強化動作】(重複執行 30 次)
         for cycle in range(30):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"強化動作: {cycle+1}/30")
             send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.3)
-            if not self.find_and_click("ee", clicks=2): break
+            if not self.find_and_click_v33("ee", clicks=2): break
             
-        # 3. 後續固定步驟
-        if not self.find_and_click("change"): return False
+        if not self.find_and_click_v33("change"): return False
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        if not self.find_and_click("hh", drag_x=300): return False
+        if not self.find_and_click_v33("hh", drag_x=300): return False
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_0); time.sleep(0.1); send_key(SCAN_0, True); time.sleep(0.5)
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        if not self.find_and_click("over"): return False
+        if not self.find_and_click_v33("over"): return False
         return True
 
     def start(self):
@@ -276,7 +303,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                success = self.task_storage_13() if self.current_task == "STORAGE" else self.task_arrow_making()
+                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v33()
                 if not success: break
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
