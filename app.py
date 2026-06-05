@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V3.5 - 任務切換版 (修正製作箭步驟 4 與 13)
+# 終極自動化工具 V3.6 - 任務切換版 (修正次數 25, 加入延遲)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -44,7 +44,7 @@ MOUSEEVENTF_RIGHTUP = 0x0010
 
 SCAN_ESC = 0x01
 SCAN_X = 0x2D; SCAN_9 = 0x0A; SCAN_DOWN = 0x50; SCAN_ENTER = 0x1C; SCAN_I = 0x17; SCAN_ALT = 0x38
-SCAN_7 = 0x08; SCAN_3 = 0x04; SCAN_0 = 0x0B
+SCAN_7 = 0x08; SCAN_2 = 0x03; SCAN_5 = 0x06
 
 SW_RESTORE = 9
 SW_MINIMIZE = 6
@@ -117,7 +117,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V3.5")
+        self.root.title("終極自動化工具 V3.6")
         self.root.geometry("600x800")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -238,24 +238,26 @@ class CustomApp:
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def task_arrow_v35(self):
-        # 1. 【核心大循環】(重複執行 30 次)
-        for cycle in range(30):
+    def task_arrow_v36(self):
+        # 1. 【核心大循環】(重複執行 25 次)
+        for cycle in range(25):
             if self.stop_event.is_set(): return False
-            self.status_label.config(text=f"製作箭大循環: {cycle+1}/30")
+            self.status_label.config(text=f"製作箭大循環: {cycle+1}/25")
             if not self.find_and_click_v33("buynpc"): return False
             if not self.find_and_click_v33("buybuy"): return False
             if not self.find_and_click_v33("dd", 0, -5, clicks=2): return False
-            # 🌟 修正處：尋找 ii 圖片，向上偏移 30，向右拖曳 300
             if not self.find_and_click_v33("ii", 0, -30, drag_x=300): return False
             if not self.find_and_click_v33("ff"): return False
             
-        # 2. 【強化動作】(重複執行 30 次)
-        for cycle in range(30):
+        # 2. 【強化動作】(重複執行 25 次)
+        for cycle in range(25):
             if self.stop_event.is_set(): return False
-            self.status_label.config(text=f"強化動作: {cycle+1}/30")
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.3)
+            self.status_label.config(text=f"強化動作: {cycle+1}/25")
+            # 🌟 調整處：按 7 後等待 1 秒
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(1.0)
+            # 🌟 調整處：雙擊 ee 後等待 1 秒
             if not self.find_and_click_v33("ee", clicks=2): break
+            time.sleep(1.0)
             
         # 3. 後續固定步驟
         if not self.find_and_click_v33("change"): return False
@@ -263,9 +265,9 @@ class CustomApp:
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         if not self.find_and_click_v33("hh", drag_x=300): return False
-        send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
-        send_key(SCAN_0); time.sleep(0.1); send_key(SCAN_0, True); time.sleep(0.5)
-        # 🌟 修正處：按 Enter 2 次
+        # 🌟 調整處：按數字鍵 2 與 5
+        send_key(SCAN_2); time.sleep(0.1); send_key(SCAN_2, True); time.sleep(0.3)
+        send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
         if not self.find_and_click_v33("over"): return False
         return True
@@ -297,7 +299,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v35()
+                success = self.task_storage_v30() if self.current_task == "STORAGE" else self.task_arrow_v36()
                 if not success: break
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
