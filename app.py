@@ -129,7 +129,7 @@ class CustomApp:
         # 1. 任務選擇
         task_frame = tk.LabelFrame(root, text="任務選擇", font=("Arial", 10, "bold"), padx=10, pady=10)
         task_frame.pack(padx=10, pady=5, fill="x")
-        self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉 (V4.6)", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
+        self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉 (1-13步)", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
         self.btn_task_storage.pack(side="left", padx=5, expand=True)
         self.btn_task_arrow = tk.Button(task_frame, text="🏹 製作箭流程", command=lambda: self.select_task("ARROW"), width=25, height=2, bg=self.COLOR_NORMAL, fg="black")
         self.btn_task_arrow.pack(side="left", padx=5, expand=True)
@@ -142,7 +142,7 @@ class CustomApp:
             row = tk.Frame(hwnd_frame); row.pack(fill="x", pady=5)
             tk.Label(row, text=f"句柄 {chr(65+i)}:", width=8).pack(side="left")
             entry = tk.Entry(row, width=20); entry.pack(side="left", padx=5); self.hwnd_entries.append(entry)
-            tk.Button(row, text=f"🔍 查詢視窗 {chr(65+index)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
+            tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
         
         # 3. 執行參數
         param_frame = tk.LabelFrame(root, text="執行參數與項目勾選", font=("Arial", 10, "bold"), padx=10, pady=10)
@@ -237,7 +237,7 @@ class CustomApp:
             return False
         except: return False
 
-    def task_storage_v46(self):
+    def task_storage_v45(self):
         try:
             c1 = max(1, min(50, int(self.count_01_entry.get())))
             c2 = max(1, min(15, int(self.count_02_entry.get())))
@@ -266,25 +266,23 @@ class CustomApp:
                     mouse_right_click(); time.sleep(0.6)
                 send_key(SCAN_ALT, True); time.sleep(0.5)
             
-        # 2. 其他類 (V4.6 精確路徑調整)
+        # 2. 其他類 (V4.6 精確路徑微調)
         if self.do_02.get():
-            # 搜尋 01.png 作為基準
+            # 尋找 01.png
             base = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
             path = os.path.join(base, "01.png")
             loc = pyautogui.locateOnScreen(path, confidence=0.85)
             if loc:
                 cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
-                # 移動到中心點
+                # 移至中心
                 move_mouse_to(cx, cy); time.sleep(0.3)
                 # 向下偏移 28
                 move_mouse_to(cx, cy + 28); time.sleep(0.3)
-                # 點擊滑鼠左鍵 1 下
+                # 點擊左鍵 1 下
                 mouse_left_click(1); time.sleep(0.5)
-                # 向右偏移 60，再向上偏移 60 (從當前位置 cx, cy+28 開始計算)
-                # 最終座標: (cx + 60, (cy + 28) - 60) = (cx + 60, cy - 32)
+                # 向右偏移 60，再向上偏移 60 (cx+60, cy+28-60 = cy-32)
                 move_mouse_to(cx + 60, cy - 32); time.sleep(0.5)
                 
-                # 執行 Alt + 右鍵 存放
                 send_key(SCAN_ALT, False); time.sleep(0.2)
                 for k in range(c2):
                     if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
@@ -361,7 +359,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                if self.current_task == "STORAGE": self.task_storage_v46()
+                if self.current_task == "STORAGE": self.task_storage_v45()
                 else: self.task_arrow_v43()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
