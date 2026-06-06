@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V4.3 - 精準操作版 (hh 偏移 + 數量 35 + 加速節奏)
+# 終極自動化工具 V4.4 - 自定義強化版 (新增消耗類 QQ + 介面標籤優化)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,8 +117,8 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V4.3")
-        self.root.geometry("600x800")
+        self.root.title("終極自動化工具 V4.4")
+        self.root.geometry("600x850")
         self.root.attributes("-topmost", True)
         self.is_running = False
         self.stop_event = threading.Event()
@@ -126,15 +126,17 @@ class CustomApp:
         self.COLOR_SELECTED = "#2196F3"
         self.COLOR_NORMAL = "#E1E1E1"
         
+        # 1. 任務選擇
         task_frame = tk.LabelFrame(root, text="任務選擇", font=("Arial", 10, "bold"), padx=10, pady=10)
-        task_frame.pack(padx=10, pady=10, fill="x")
+        task_frame.pack(padx=10, pady=5, fill="x")
         self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉 (1-13步)", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
         self.btn_task_storage.pack(side="left", padx=5, expand=True)
         self.btn_task_arrow = tk.Button(task_frame, text="🏹 製作箭流程", command=lambda: self.select_task("ARROW"), width=25, height=2, bg=self.COLOR_NORMAL, fg="black")
         self.btn_task_arrow.pack(side="left", padx=5, expand=True)
         
+        # 2. 句柄管理
         hwnd_frame = tk.LabelFrame(root, text="句柄管理", font=("Arial", 10, "bold"), padx=10, pady=10)
-        hwnd_frame.pack(padx=10, pady=10, fill="x")
+        hwnd_frame.pack(padx=10, pady=5, fill="x")
         self.hwnd_entries = []
         for i in range(3):
             row = tk.Frame(hwnd_frame); row.pack(fill="x", pady=5)
@@ -142,16 +144,37 @@ class CustomApp:
             entry = tk.Entry(row, width=20); entry.pack(side="left", padx=5); self.hwnd_entries.append(entry)
             tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
         
+        # 3. 執行參數
         param_frame = tk.LabelFrame(root, text="執行參數", font=("Arial", 10, "bold"), padx=10, pady=10)
-        param_frame.pack(padx=10, pady=10, fill="x")
-        row1 = tk.Frame(param_frame); row1.pack(fill="x", pady=5)
-        tk.Label(row1, text="循環間隔 (小時):", width=15).pack(side="left")
-        self.interval_entry = tk.Entry(row1, width=10); self.interval_entry.insert(0, "4"); self.interval_entry.pack(side="left", padx=5)
-        row2 = tk.Frame(param_frame); row2.pack(fill="x", pady=5)
-        tk.Label(row2, text="執行次數 (0=無限):", width=15).pack(side="left")
-        self.cycles_entry = tk.Entry(row2, width=10); self.cycles_entry.insert(0, "0"); self.cycles_entry.pack(side="left", padx=5)
+        param_frame.pack(padx=10, pady=5, fill="x")
         
-        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue", pady=10); self.status_label.pack()
+        row_time = tk.Frame(param_frame); row_time.pack(fill="x", pady=2)
+        tk.Label(row_time, text="循環間隔 (小時):", width=22, anchor="w").pack(side="left")
+        self.interval_entry = tk.Entry(row_time, width=10); self.interval_entry.insert(0, "4"); self.interval_entry.pack(side="left", padx=5)
+        
+        row_cycle = tk.Frame(param_frame); row_cycle.pack(fill="x", pady=2)
+        tk.Label(row_cycle, text="執行次數 (0=無限):", width=22, anchor="w").pack(side="left")
+        self.cycles_entry = tk.Entry(row_cycle, width=10); self.cycles_entry.insert(0, "0"); self.cycles_entry.pack(side="left", padx=5)
+        
+        tk.Frame(param_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
+        
+        # 裝備存入次數 (01.png)
+        row_01 = tk.Frame(param_frame); row_01.pack(fill="x", pady=2)
+        tk.Label(row_01, text="裝備存入次數 1~50 (預設20):", width=22, anchor="w").pack(side="left")
+        self.count_01_entry = tk.Entry(row_01, width=10); self.count_01_entry.insert(0, "20"); self.count_01_entry.pack(side="left", padx=5)
+        
+        # 其他類存入次數 (02.png)
+        row_02 = tk.Frame(param_frame); row_02.pack(fill="x", pady=2)
+        tk.Label(row_02, text="其他類存入次數 1~15 (預設6):", width=22, anchor="w").pack(side="left")
+        self.count_02_entry = tk.Entry(row_02, width=10); self.count_02_entry.insert(0, "6"); self.count_02_entry.pack(side="left", padx=5)
+        
+        # 消耗類存入次數 (qq.png)
+        row_qq = tk.Frame(param_frame); row_qq.pack(fill="x", pady=2)
+        tk.Label(row_qq, text="消耗類存入次數 1~20 (預設5):", width=22, anchor="w").pack(side="left")
+        self.count_qq_entry = tk.Entry(row_qq, width=10); self.count_qq_entry.insert(0, "5"); self.count_qq_entry.pack(side="left", padx=5)
+        
+        # 4. 狀態與按鈕
+        self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue", pady=5); self.status_label.pack()
         self.countdown_label = tk.Label(root, text="倒數: 00:00:00", font=("Arial", 11), fg="darkgreen"); self.countdown_label.pack()
         self.start_btn = tk.Button(root, text="▶ 開始執行", command=self.start, width=30, height=2, bg="#4CAF50", fg="white", font=("Arial", 10, "bold")); self.start_btn.pack(pady=5)
         self.stop_btn = tk.Button(root, text="⏹ 強制停止", command=self.stop, width=30, height=2, bg="#F44336", fg="white", state="disabled"); self.stop_btn.pack(pady=5)
@@ -208,10 +231,17 @@ class CustomApp:
             return False
         except: return False
 
-    def task_storage_v30(self):
+    def task_storage_v44(self):
+        try:
+            c1 = max(1, min(50, int(self.count_01_entry.get())))
+            c2 = max(1, min(15, int(self.count_02_entry.get())))
+            cq = max(1, min(20, int(self.count_qq_entry.get())))
+        except: c1, c2, cq = 20, 6, 5
+
         for i in range(3, 0, -1):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"準備中... {i}"); time.sleep(1)
+        
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True); time.sleep(1.0)
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
@@ -219,27 +249,40 @@ class CustomApp:
             if self.stop_event.is_set(): return False
             send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
+        
+        # 1. 裝備類
         if self.find_and_click_v30("01.png", 28, -30):
             send_key(SCAN_ALT, False); time.sleep(0.2)
-            for k in range(20):
+            for k in range(c1):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"右鍵點擊 (01): {k+1}/20")
+                self.status_label.config(text=f"存放裝備類: {k+1}/{c1}")
                 mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
+            
+        # 2. 其他類
         if self.find_and_click_v30("02.png", 28, -60):
             send_key(SCAN_ALT, False); time.sleep(0.2)
-            for k in range(6):
+            for k in range(c2):
                 if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"右鍵點擊 (02): {k+1}/6")
+                self.status_label.config(text=f"存放其他類: {k+1}/{c2}")
                 mouse_right_click(); time.sleep(0.6)
             send_key(SCAN_ALT, True); time.sleep(0.5)
+
+        # 3. 消耗類 (qq.png)
+        if self.find_and_click_v30("qq.png", 28, 0):
+            send_key(SCAN_ALT, False); time.sleep(0.2)
+            for k in range(cq):
+                if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                self.status_label.config(text=f"存放消耗類: {k+1}/{cq}")
+                mouse_right_click(); time.sleep(0.6)
+            send_key(SCAN_ALT, True); time.sleep(0.5)
+            
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
         self.find_and_click_v43("ca2")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
     def task_arrow_v43(self):
-        # 1. 製作箭大循環 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作箭大循環: {cycle+1}/25")
@@ -248,39 +291,20 @@ class CustomApp:
             self.find_and_click_v43("dd", 0, -5, clicks=2)
             self.find_and_click_v43("ii", 0, -30, drag_x=300)
             self.find_and_click_v43("ff")
-            
-        # 大循環完成後，等待緩衝 7 秒
-        self.status_label.config(text="大循環完成，等待緩衝 7 秒...")
-        time.sleep(7)
-            
-        # 2. 流程動作 (25次) - 移除最前面的等待1秒
+        self.status_label.config(text="大循環完成，等待緩衝 7 秒..."); time.sleep(7)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"流程動作: {cycle+1}/25")
-            # 刪除原本的 time.sleep(1)
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5) # 2. 按 7 並等待 0.5 秒
-            self.find_and_click_v43("ee", clicks=2) # 3. 尋找 ee 並雙擊
-            time.sleep(0.5) # 3. 雙擊後等待 0.5 秒
-            time.sleep(0.5) # 4. 等待 0.5 秒確保動作完成
-            
-        # 3. 變更設定 (步驟 8-10)
-        self.status_label.config(text="正在執行變更設定...")
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
+            self.find_and_click_v43("ee", clicks=2); time.sleep(1.0)
         self.find_and_click_v43("change")
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-        
-        # 4. 數量設定 (步驟 11-13) - 精確 hh 偏移 + 數量 35
-        self.status_label.config(text="正在執行數量設定...")
-        # 🌟 調整處：尋找 hh -> 中心 -> 向下偏移 60 -> 壓住左鍵 -> 向右拖曳 300
         self.find_and_click_v43("hh", offset_y=60, drag_x=300)
-        
-        # 🌟 調整處：設定數量為 35
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
-        
-        # 5. 完成收尾
         self.find_and_click_v43("over")
         return True
 
@@ -311,7 +335,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                if self.current_task == "STORAGE": self.task_storage_v30()
+                if self.current_task == "STORAGE": self.task_storage_v44()
                 else: self.task_arrow_v43()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
