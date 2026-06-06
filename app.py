@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V4.4 - 自定義強化版 (新增消耗類 QQ + 介面標籤優化)
+# 終極自動化工具 V4.5 - 勾選自定義版 (新增勾選功能 + 標籤優化)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -117,8 +117,8 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V4.4")
-        self.root.geometry("600x850")
+        self.root.title("終極自動化工具 V4.5")
+        self.root.geometry("600x900")
         self.root.attributes("-topmost", True)
         self.is_running = False
         self.stop_event = threading.Event()
@@ -145,7 +145,7 @@ class CustomApp:
             tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
         
         # 3. 執行參數
-        param_frame = tk.LabelFrame(root, text="執行參數", font=("Arial", 10, "bold"), padx=10, pady=10)
+        param_frame = tk.LabelFrame(root, text="執行參數與項目勾選", font=("Arial", 10, "bold"), padx=10, pady=10)
         param_frame.pack(padx=10, pady=5, fill="x")
         
         row_time = tk.Frame(param_frame); row_time.pack(fill="x", pady=2)
@@ -158,19 +158,25 @@ class CustomApp:
         
         tk.Frame(param_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
         
-        # 裝備存入次數 (01.png)
+        # 裝備類設定
+        self.do_01 = tk.BooleanVar(value=True)
         row_01 = tk.Frame(param_frame); row_01.pack(fill="x", pady=2)
-        tk.Label(row_01, text="裝備存入次數 1~50 (預設20):", width=22, anchor="w").pack(side="left")
+        tk.Checkbutton(row_01, text="執行裝備類", variable=self.do_01, font=("Arial", 9, "bold")).pack(side="left")
+        tk.Label(row_01, text=" 存入次數 1~50:", width=15, anchor="w").pack(side="left")
         self.count_01_entry = tk.Entry(row_01, width=10); self.count_01_entry.insert(0, "20"); self.count_01_entry.pack(side="left", padx=5)
         
-        # 其他類存入次數 (02.png)
+        # 其他類設定
+        self.do_02 = tk.BooleanVar(value=True)
         row_02 = tk.Frame(param_frame); row_02.pack(fill="x", pady=2)
-        tk.Label(row_02, text="其他類存入次數 1~15 (預設6):", width=22, anchor="w").pack(side="left")
+        tk.Checkbutton(row_02, text="執行其他類", variable=self.do_02, font=("Arial", 9, "bold")).pack(side="left")
+        tk.Label(row_02, text=" 存入次數 1~15:", width=15, anchor="w").pack(side="left")
         self.count_02_entry = tk.Entry(row_02, width=10); self.count_02_entry.insert(0, "6"); self.count_02_entry.pack(side="left", padx=5)
         
-        # 消耗類存入次數 (qq.png)
+        # 消耗類設定
+        self.do_qq = tk.BooleanVar(value=True)
         row_qq = tk.Frame(param_frame); row_qq.pack(fill="x", pady=2)
-        tk.Label(row_qq, text="消耗類存入次數 1~20 (預設5):", width=22, anchor="w").pack(side="left")
+        tk.Checkbutton(row_qq, text="執行消耗類", variable=self.do_qq, font=("Arial", 9, "bold")).pack(side="left")
+        tk.Label(row_qq, text=" 存入次數 1~20:", width=15, anchor="w").pack(side="left")
         self.count_qq_entry = tk.Entry(row_qq, width=10); self.count_qq_entry.insert(0, "5"); self.count_qq_entry.pack(side="left", padx=5)
         
         # 4. 狀態與按鈕
@@ -231,7 +237,7 @@ class CustomApp:
             return False
         except: return False
 
-    def task_storage_v44(self):
+    def task_storage_v45(self):
         try:
             c1 = max(1, min(50, int(self.count_01_entry.get())))
             c2 = max(1, min(15, int(self.count_02_entry.get())))
@@ -250,32 +256,35 @@ class CustomApp:
             send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.7)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
         
-        # 1. 裝備類
-        if self.find_and_click_v30("01.png", 28, -30):
-            send_key(SCAN_ALT, False); time.sleep(0.2)
-            for k in range(c1):
-                if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"存放裝備類: {k+1}/{c1}")
-                mouse_right_click(); time.sleep(0.6)
-            send_key(SCAN_ALT, True); time.sleep(0.5)
+        # 1. 裝備類 (需勾選)
+        if self.do_01.get():
+            if self.find_and_click_v30("01.png", 28, -30):
+                send_key(SCAN_ALT, False); time.sleep(0.2)
+                for k in range(c1):
+                    if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                    self.status_label.config(text=f"存放裝備類: {k+1}/{c1}")
+                    mouse_right_click(); time.sleep(0.6)
+                send_key(SCAN_ALT, True); time.sleep(0.5)
             
-        # 2. 其他類
-        if self.find_and_click_v30("02.png", 28, -60):
-            send_key(SCAN_ALT, False); time.sleep(0.2)
-            for k in range(c2):
-                if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"存放其他類: {k+1}/{c2}")
-                mouse_right_click(); time.sleep(0.6)
-            send_key(SCAN_ALT, True); time.sleep(0.5)
+        # 2. 其他類 (需勾選)
+        if self.do_02.get():
+            if self.find_and_click_v30("02.png", 28, -60):
+                send_key(SCAN_ALT, False); time.sleep(0.2)
+                for k in range(c2):
+                    if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                    self.status_label.config(text=f"存放其他類: {k+1}/{c2}")
+                    mouse_right_click(); time.sleep(0.6)
+                send_key(SCAN_ALT, True); time.sleep(0.5)
 
-        # 3. 消耗類 (qq.png)
-        if self.find_and_click_v30("qq.png", 28, 0):
-            send_key(SCAN_ALT, False); time.sleep(0.2)
-            for k in range(cq):
-                if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
-                self.status_label.config(text=f"存放消耗類: {k+1}/{cq}")
-                mouse_right_click(); time.sleep(0.6)
-            send_key(SCAN_ALT, True); time.sleep(0.5)
+        # 3. 消耗類 (需勾選)
+        if self.do_qq.get():
+            if self.find_and_click_v30("qq.png", 28, 0):
+                send_key(SCAN_ALT, False); time.sleep(0.2)
+                for k in range(cq):
+                    if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
+                    self.status_label.config(text=f"存放消耗類: {k+1}/{cq}")
+                    mouse_right_click(); time.sleep(0.6)
+                send_key(SCAN_ALT, True); time.sleep(0.5)
             
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
         self.find_and_click_v43("ca2")
@@ -335,7 +344,7 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                if self.current_task == "STORAGE": self.task_storage_v44()
+                if self.current_task == "STORAGE": self.task_storage_v45()
                 else: self.task_arrow_v43()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
