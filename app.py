@@ -293,8 +293,8 @@ class CustomApp:
             self.find_and_click_v49("ii", 0, -30, drag_x=300)
             self.find_and_click_v49("ff")
           
-        # === 採購25次完成後等待1秒 ===
-        time.sleep(1)
+        # === 採購25次完成後等待1.5秒 ===
+        time.sleep(1.5)
         self.status_label.config(text="採購完成，繼續執行製作...")
           
         # 3. 製作動作 (25次)
@@ -304,8 +304,8 @@ class CustomApp:
             send_key(SCAN_7); time.sleep(0.3); send_key(SCAN_7, True)
             self.find_and_click_v49("gg", offset_y=-150, clicks=2)
           
-        # === 製作動作25次完成後等待1秒 ===
-        time.sleep(1)
+        # === 製作動作25次完成後等待1.5秒 ===
+        time.sleep(1.5)
 
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
@@ -322,8 +322,8 @@ class CustomApp:
       
         self.find_and_click_v49("over")
        
-        # over完成後等待1秒
-        time.sleep(1)
+        # === over.png 完成後等待1.5秒 ===
+        time.sleep(1.5)
 
         # 5. 收尾追加流程
         self.status_label.config(text="執行收尾追加流程...")
@@ -337,7 +337,7 @@ class CustomApp:
         if loc_qq:
             cx, cy = loc_qq.left + loc_qq.width // 2, loc_qq.top + loc_qq.height // 2
             move_mouse_to(cx, cy); time.sleep(0.3); mouse_left_click(1); time.sleep(0.3)
-            move_mouse_to(cx + 32, cy); time.sleep(0.3)
+            move_mouse_to(cx + 28, cy); time.sleep(0.3)
             send_key(SCAN_ALT, False); time.sleep(0.2)
             mouse_right_click(1); time.sleep(0.5)
             send_key(SCAN_ALT, True); time.sleep(0.5)
