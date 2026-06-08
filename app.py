@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V4.9 - 終極穩定整合版 (7秒等待 + 加速節奏 + 完整收尾)
+# 終極自動化工具 V4.9 - 終極穩定整合版
 # =================================================================
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
@@ -279,7 +279,7 @@ class CustomApp:
     def task_arrow_v49(self):
         # 開頭先等待3秒
         time.sleep(3)
-        
+       
         # 1. 開頭 Insert
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(1)
 
@@ -292,32 +292,37 @@ class CustomApp:
             self.find_and_click_v49("dd", 0, -5, clicks=2)
             self.find_and_click_v49("ii", 0, -30, drag_x=300)
             self.find_and_click_v49("ff")
-           
+          
+        # === 採購25次完成後等待1秒 ===
+        time.sleep(1)
         self.status_label.config(text="採購完成，繼續執行製作...")
-           
+          
         # 3. 製作動作 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作動作: {cycle+1}/25")
             send_key(SCAN_7); time.sleep(0.3); send_key(SCAN_7, True)
             self.find_and_click_v49("gg", offset_y=-150, clicks=2)
-           
+          
+        # === 製作動作25次完成後等待1秒 ===
+        time.sleep(1)
+
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
         self.find_and_click_v49("change")
-        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)   # 1次
+        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
-       
+      
         self.find_and_click_v49("hh", offset_y=60, drag_x=300)
-       
+      
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(1): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
-       
+      
         self.find_and_click_v49("over")
-        
-        # === 新增：over.png 完成後等待 1 秒 ===
+       
+        # over完成後等待1秒
         time.sleep(1)
 
         # 5. 收尾追加流程
@@ -326,21 +331,21 @@ class CustomApp:
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
-       
+      
         path_qq = self.find_img_path("qq")
         loc_qq = pyautogui.locateOnScreen(path_qq, confidence=0.85)
         if loc_qq:
             cx, cy = loc_qq.left + loc_qq.width // 2, loc_qq.top + loc_qq.height // 2
             move_mouse_to(cx, cy); time.sleep(0.3); mouse_left_click(1); time.sleep(0.3)
-            move_mouse_to(cx + 32, cy); time.sleep(0.3)
+            move_mouse_to(cx + 28, cy); time.sleep(0.3)
             send_key(SCAN_ALT, False); time.sleep(0.2)
             mouse_right_click(1); time.sleep(0.5)
             send_key(SCAN_ALT, True); time.sleep(0.5)
-           
-        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)   # 1次
+          
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
         self.find_and_click_v49("ca2")
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
-       
+      
         return True
 
     def start(self):
@@ -375,7 +380,7 @@ class CustomApp:
                 else: self.task_arrow_v49()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
-           
+          
             wait = int(self.interval_storage * 3600) if self.current_task == "STORAGE" else int(self.interval_arrow * 60)
             while wait > 0 and not self.stop_event.is_set():
                 h, r = divmod(wait, 3600); m, s = divmod(r, 60)
