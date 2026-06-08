@@ -298,7 +298,10 @@ class CustomApp:
         return True
 
     def task_arrow_v49(self):
-        # 1. 開頭 Insert
+        # 
+        time.sleep(3)  # 等待3秒
+        
+        # 1.  Insert
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
         
         # 2. 採購大循環 (25次)
@@ -322,7 +325,9 @@ class CustomApp:
             send_key(SCAN_7); time.sleep(0.3); send_key(SCAN_7, True)
             # 🌟 搜尋 gg.png，向上偏移 150 並雙擊
             self.find_and_click_v49("gg", offset_y=-150, clicks=2)
-            
+            # 等待兩秒
+        time.sleep(2)  # 等待2秒
+        
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
         self.find_and_click_v49("change")
