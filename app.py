@@ -277,11 +277,11 @@ class CustomApp:
         return True
 
     def task_arrow_v49(self):
-        # === 修改1：開頭先等待3秒 ===
+        # 開頭先等待3秒
         time.sleep(3)
         
         # 1. 開頭 Insert
-        send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(1)  # 改為等待1秒
+        send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(1)
 
         # 2. 採購大循環 (25次)
         for cycle in range(25):
@@ -305,7 +305,7 @@ class CustomApp:
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
         self.find_and_click_v49("change")
-        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)   # 修改為1次
+        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)   # 1次
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
        
@@ -316,7 +316,10 @@ class CustomApp:
         for _ in range(1): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
        
         self.find_and_click_v49("over")
-       
+        
+        # === 新增：over.png 完成後等待 1 秒 ===
+        time.sleep(1)
+
         # 5. 收尾追加流程
         self.status_label.config(text="執行收尾追加流程...")
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
@@ -334,7 +337,7 @@ class CustomApp:
             mouse_right_click(1); time.sleep(0.5)
             send_key(SCAN_ALT, True); time.sleep(0.5)
            
-        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)   # 修改為1次
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)   # 1次
         self.find_and_click_v49("ca2")
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
        
