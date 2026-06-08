@@ -117,7 +117,6 @@ class CustomApp:
         self.COLOR_SELECTED = "#2196F3"
         self.COLOR_NORMAL = "#E1E1E1"
        
-        # 1. 任務選擇
         task_frame = tk.LabelFrame(root, text="任務選擇", font=("Arial", 10, "bold"), padx=10, pady=10)
         task_frame.pack(padx=10, pady=5, fill="x")
         self.btn_task_storage = tk.Button(task_frame, text="📦 倒數存倉", command=lambda: self.select_task("STORAGE"), width=25, height=2, bg=self.COLOR_SELECTED, fg="white")
@@ -125,7 +124,6 @@ class CustomApp:
         self.btn_task_arrow = tk.Button(task_frame, text="🏹 製作箭流程", command=lambda: self.select_task("ARROW"), width=25, height=2, bg=self.COLOR_NORMAL, fg="black")
         self.btn_task_arrow.pack(side="left", padx=5, expand=True)
        
-        # 2. 句柄管理
         hwnd_frame = tk.LabelFrame(root, text="句柄管理", font=("Arial", 10, "bold"), padx=10, pady=10)
         hwnd_frame.pack(padx=10, pady=5, fill="x")
         self.hwnd_entries = []
@@ -135,7 +133,6 @@ class CustomApp:
             entry = tk.Entry(row, width=20); entry.pack(side="left", padx=5); self.hwnd_entries.append(entry)
             tk.Button(row, text=f"🔍 查詢視窗 {chr(65+i)}", command=lambda idx=i: self.start_get_hwnd(idx), bg="#9E9E9E", fg="white", width=15).pack(side="left")
        
-        # 3. 執行參數
         param_frame = tk.LabelFrame(root, text="執行參數與項目勾選", font=("Arial", 10, "bold"), padx=10, pady=10)
         param_frame.pack(padx=10, pady=5, fill="x")
        
@@ -152,7 +149,6 @@ class CustomApp:
        
         tk.Frame(param_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
        
-        # 存倉項目勾選 (自定義次數)
         self.do_01 = tk.BooleanVar(value=True)
         row_01 = tk.Frame(param_frame); row_01.pack(fill="x", pady=2)
         tk.Checkbutton(row_01, text="執行裝備類", variable=self.do_01, font=("Arial", 9, "bold")).pack(side="left")
@@ -171,7 +167,6 @@ class CustomApp:
         tk.Label(row_qq, text=" 次數:", width=10, anchor="w").pack(side="left")
         self.count_qq_entry = tk.Entry(row_qq, width=10); self.count_qq_entry.insert(0, "5"); self.count_qq_entry.pack(side="left", padx=5)
        
-        # 4. 狀態與按鈕
         self.status_label = tk.Label(root, text="狀態: 待機中", font=("Arial", 11), fg="blue", pady=5); self.status_label.pack()
         self.countdown_label = tk.Label(root, text="倒數: 00:00:00", font=("Arial", 11), fg="darkgreen"); self.countdown_label.pack()
         self.start_btn = tk.Button(root, text="▶ 開始執行", command=self.start, width=30, height=2, bg="#4CAF50", fg="white", font=("Arial", 10, "bold")); self.start_btn.pack(pady=5)
@@ -218,7 +213,6 @@ class CustomApp:
         except: return False
 
     def task_storage_v49(self):
-        # （此處保持你原本的內容不變）
         try:
             c1 = int(self.count_01_entry.get())
             c2 = int(self.count_02_entry.get())
@@ -283,12 +277,12 @@ class CustomApp:
         return True
 
     def task_arrow_v49(self):
-        # === 修改 1：開始執行時先等待 3 秒 ===
+        # === 修改1：開頭先等待3秒 ===
         time.sleep(3)
         
         # 1. 開頭 Insert
-        send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
-       
+        send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(1)  # 改為等待1秒
+
         # 2. 採購大循環 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
@@ -299,20 +293,19 @@ class CustomApp:
             self.find_and_click_v49("ii", 0, -30, drag_x=300)
             self.find_and_click_v49("ff")
            
-        # 3. 製作動作（共執行 25 次）
+        self.status_label.config(text="採購完成，繼續執行製作...")
+           
+        # 3. 製作動作 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作動作: {cycle+1}/25")
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True)
+            send_key(SCAN_7); time.sleep(0.3); send_key(SCAN_7, True)
             self.find_and_click_v49("gg", offset_y=-150, clicks=2)
-        
-        # === 修改 2：製作動作 25 次完成後等待 2 秒 ===
-        time.sleep(2)
-       
+           
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
         self.find_and_click_v49("change")
-        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
+        send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)   # 修改為1次
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
        
@@ -341,7 +334,7 @@ class CustomApp:
             mouse_right_click(1); time.sleep(0.5)
             send_key(SCAN_ALT, True); time.sleep(0.5)
            
-        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
+        send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)   # 修改為1次
         self.find_and_click_v49("ca2")
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
        
