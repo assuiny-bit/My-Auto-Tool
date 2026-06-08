@@ -320,8 +320,8 @@ class CustomApp:
             self.status_label.config(text=f"製作動作: {cycle+1}/25")
             # 按鍵操作：按下並放開鍵盤上的數字鍵 7
             send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True)
-            # 🌟 修改 2：搜尋圖片 gg.png，向上偏移 210 並雙擊
-            self.find_and_click_v49("gg", offset_y=-210, clicks=2)
+            # 🌟 修改 2：搜尋圖片 gg.png，向上偏移 150 並雙擊
+            self.find_and_click_v49("gg", offset_y=-150, clicks=2)
             
         # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
