@@ -332,7 +332,7 @@ class CustomApp:
         if loc_qq:
             cx, cy = loc_qq.left + loc_qq.width // 2, loc_qq.top + loc_qq.height // 2
             move_mouse_to(cx, cy); time.sleep(0.3); mouse_left_click(1); time.sleep(0.3)
-            move_mouse_to(cx + 28, cy); time.sleep(0.3)
+            move_mouse_to(cx + 32, cy); time.sleep(0.3)
             send_key(SCAN_ALT, False); time.sleep(0.2)
             mouse_right_click(1); time.sleep(0.5)
             send_key(SCAN_ALT, True); time.sleep(0.5)
