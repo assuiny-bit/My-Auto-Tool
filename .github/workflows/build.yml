@@ -37,6 +37,7 @@ jobs:
         --add-data "hh.png;." `
         --add-data "over.png;." `
         --add-data "ii.png;." `
+        --add-data "gg.png;." `
         --clean --noconfirm --name MyAutoTool app.py
 
     - name: Upload artifact
