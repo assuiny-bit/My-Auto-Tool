@@ -9,7 +9,7 @@ import pyautogui
 import os
 
 # =================================================================
-# 終極自動化工具 V4.8 - 終極整合版 (移除7秒等待 + 全功能整合)
+# 終極自動化工具 V4.9 - 終極穩定整合版 (7秒等待 + 加速節奏 + 完整收尾)
 # =================================================================
 
 class POINT(ctypes.Structure):
@@ -118,7 +118,7 @@ def send_key(scancode, is_up=False, is_extended=False):
 class CustomApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("終極自動化工具 V4.8")
+        self.root.title("終極自動化工具 V4.9")
         self.root.geometry("600x950")
         self.root.attributes("-topmost", True)
         self.is_running = False
@@ -163,23 +163,23 @@ class CustomApp:
         
         tk.Frame(param_frame, height=2, bd=1, relief="sunken").pack(fill="x", pady=5)
         
-        # 存倉項目勾選
+        # 存倉項目勾選 (自定義次數)
         self.do_01 = tk.BooleanVar(value=True)
         row_01 = tk.Frame(param_frame); row_01.pack(fill="x", pady=2)
         tk.Checkbutton(row_01, text="執行裝備類", variable=self.do_01, font=("Arial", 9, "bold")).pack(side="left")
-        tk.Label(row_01, text=" 次數 1~50:", width=15, anchor="w").pack(side="left")
+        tk.Label(row_01, text=" 次數:", width=10, anchor="w").pack(side="left")
         self.count_01_entry = tk.Entry(row_01, width=10); self.count_01_entry.insert(0, "20"); self.count_01_entry.pack(side="left", padx=5)
         
         self.do_02 = tk.BooleanVar(value=True)
         row_02 = tk.Frame(param_frame); row_02.pack(fill="x", pady=2)
         tk.Checkbutton(row_02, text="執行其他類", variable=self.do_02, font=("Arial", 9, "bold")).pack(side="left")
-        tk.Label(row_02, text=" 次數 1~15:", width=15, anchor="w").pack(side="left")
+        tk.Label(row_02, text=" 次數:", width=10, anchor="w").pack(side="left")
         self.count_02_entry = tk.Entry(row_02, width=10); self.count_02_entry.insert(0, "6"); self.count_02_entry.pack(side="left", padx=5)
         
         self.do_qq = tk.BooleanVar(value=True)
         row_qq = tk.Frame(param_frame); row_qq.pack(fill="x", pady=2)
         tk.Checkbutton(row_qq, text="執行消耗類", variable=self.do_qq, font=("Arial", 9, "bold")).pack(side="left")
-        tk.Label(row_qq, text=" 次數 1~20:", width=15, anchor="w").pack(side="left")
+        tk.Label(row_qq, text=" 次數:", width=10, anchor="w").pack(side="left")
         self.count_qq_entry = tk.Entry(row_qq, width=10); self.count_qq_entry.insert(0, "5"); self.count_qq_entry.pack(side="left", padx=5)
         
         # 4. 狀態與按鈕
@@ -214,11 +214,25 @@ class CustomApp:
         base = sys._MEIPASS if getattr(sys, 'frozen', False) else os.path.abspath(".")
         return os.path.join(base, f"{img_name}.png")
 
-    def task_storage_v48(self):
+    def find_and_click_v49(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
+        if self.stop_event.is_set(): return False
         try:
-            c1 = max(1, min(50, int(self.count_01_entry.get())))
-            c2 = max(1, min(15, int(self.count_02_entry.get())))
-            cq = max(1, min(20, int(self.count_qq_entry.get())))
+            path = self.find_img_path(img)
+            loc = pyautogui.locateOnScreen(path, confidence=0.85)
+            if loc:
+                cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
+                move_mouse_to(cx + offset_x, cy + offset_y); time.sleep(0.2)
+                if drag_x != 0 or drag_y != 0: mouse_drag(drag_x, drag_y)
+                else: mouse_left_click(clicks)
+                time.sleep(0.2); return True
+            return False
+        except: return False
+
+    def task_storage_v49(self):
+        try:
+            c1 = int(self.count_01_entry.get())
+            c2 = int(self.count_02_entry.get())
+            cq = int(self.count_qq_entry.get())
         except: c1, c2, cq = 20, 6, 5
 
         for i in range(3, 0, -1):
@@ -248,15 +262,14 @@ class CustomApp:
                     mouse_right_click(); time.sleep(0.6)
                 send_key(SCAN_ALT, True); time.sleep(0.5)
             
-        # 2. 其他類 (精確路徑)
+        # 2. 其他類
         if self.do_02.get():
             path = self.find_img_path("01")
             loc = pyautogui.locateOnScreen(path, confidence=0.85)
             if loc:
                 cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
-                move_mouse_to(cx, cy + 28); time.sleep(0.3)
-                mouse_left_click(); time.sleep(0.5)
-                move_mouse_to(cx + 60, (cy + 28) - 60); time.sleep(0.5)
+                move_mouse_to(cx, cy + 28); time.sleep(0.3); mouse_left_click(); time.sleep(0.5)
+                move_mouse_to(cx + 60, cy - 32); time.sleep(0.5)
                 send_key(SCAN_ALT, False); time.sleep(0.2)
                 for k in range(c2):
                     if self.stop_event.is_set(): send_key(SCAN_ALT, True); return False
@@ -280,75 +293,63 @@ class CustomApp:
                 send_key(SCAN_ALT, True); time.sleep(0.5)
             
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
-        path_ca2 = self.find_img_path("ca2")
-        loc_ca2 = pyautogui.locateOnScreen(path_ca2, confidence=0.85)
-        if loc_ca2:
-            move_mouse_to(loc_ca2.left + loc_ca2.width // 2, loc_ca2.top + loc_ca2.height // 2)
-            time.sleep(0.2); mouse_left_click(); time.sleep(0.2)
+        self.find_and_click_v49("ca2")
         send_key(SCAN_X); time.sleep(0.1); send_key(SCAN_X, True)
         return True
 
-    def find_and_click_v43(self, img, offset_x=0, offset_y=0, clicks=1, drag_x=0, drag_y=0):
-        if self.stop_event.is_set(): return False
-        try:
-            path = self.find_img_path(img)
-            loc = pyautogui.locateOnScreen(path, confidence=0.85)
-            if loc:
-                cx, cy = loc.left + loc.width // 2, loc.top + loc.height // 2
-                move_mouse_to(cx + offset_x, cy + offset_y); time.sleep(0.2)
-                if drag_x != 0 or drag_y != 0: mouse_drag(drag_x, drag_y)
-                else: mouse_left_click(clicks)
-                time.sleep(0.2); return True
-            return False
-        except: return False
-
-    def task_arrow_v48(self):
+    def task_arrow_v49(self):
         # 1. 開頭 Insert
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
         
-        # 2. 採購大循環
+        # 2. 採購大循環 (25次)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"採購循環: {cycle+1}/25")
-            self.find_and_click_v43("buynpc")
-            self.find_and_click_v43("buybuy")
-            self.find_and_click_v43("dd", 0, -5, clicks=2)
-            self.find_and_click_v43("ii", 0, -30, drag_x=300)
-            self.find_and_click_v43("ff")
+            self.find_and_click_v49("buynpc")
+            self.find_and_click_v49("buybuy")
+            self.find_and_click_v49("dd", 0, -5, clicks=2)
+            self.find_and_click_v49("ii", 0, -30, drag_x=300)
+            self.find_and_click_v49("ff")
             
-        # 3. 製作循環 (移除 7 秒等待)
+        # 🌟 關鍵緩衝：大循環完成後等待 7 秒
+        self.status_label.config(text="採購完成，等待緩衝 7 秒...")
+        time.sleep(7)
+            
+        # 3. 製作動作 (25次) - 加速節奏 (移除開頭1秒)
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作動作: {cycle+1}/25")
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5)
-            self.find_and_click_v43("ee", clicks=2); time.sleep(1.0)
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5) # 按 7 並等待 0.5 秒
+            self.find_and_click_v49("ee", clicks=2) # 雙擊 ee
+            time.sleep(0.5) # 雙擊後等待 0.5 秒
+            time.sleep(0.5) # 額外等待 0.5 秒確保動作完成
             
-        # 4. 中段切換與確認 (核心邏輯補回)
+        # 4. 中段切換與確認
         self.status_label.config(text="執行中段切換與確認...")
-        self.find_and_click_v43("change")
+        self.find_and_click_v49("change")
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         
-        # hh 物品轉移 (下方 60, 右拖曳 300)
-        self.find_and_click_v43("hh", offset_y=60, drag_x=300)
+        # hh 轉移 (向下偏移 60, 向右拖曳 300)
+        self.find_and_click_v49("hh", offset_y=60, drag_x=300)
         
-        # 最後確認 (3 -> 5 -> Enter x2)
+        # 數量設定 (3 與 5 = 35)
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
         
         # 結束製作
-        self.find_and_click_v43("over")
+        self.find_and_click_v49("over")
         
-        # 5. 收尾追加流程
+        # 5. 收尾追加流程 (V4.8 核心收尾)
         self.status_label.config(text="執行收尾追加流程...")
         send_key(SCAN_9); time.sleep(0.1); send_key(SCAN_9, True); time.sleep(0.5)
         send_key(SCAN_DOWN, False, True); time.sleep(0.1); send_key(SCAN_DOWN, True, True); time.sleep(0.5)
         for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
         send_key(SCAN_I); time.sleep(0.1); send_key(SCAN_I, True); time.sleep(0.5)
         
-        # qq 精確操作 (點擊中心 -> 右移 28 -> Alt+右鍵)
+        # qq 精確收尾 (點擊中心 -> 右移 28 -> Alt+右鍵)
         path_qq = self.find_img_path("qq")
         loc_qq = pyautogui.locateOnScreen(path_qq, confidence=0.85)
         if loc_qq:
@@ -360,12 +361,7 @@ class CustomApp:
             send_key(SCAN_ALT, True); time.sleep(0.5)
             
         send_key(SCAN_ESC); time.sleep(0.1); send_key(SCAN_ESC, True); time.sleep(0.5)
-        # 點擊 ca2 並按 Insert
-        path_ca2 = self.find_img_path("ca2")
-        loc_ca2 = pyautogui.locateOnScreen(path_ca2, confidence=0.85)
-        if loc_ca2:
-            move_mouse_to(loc_ca2.left + loc_ca2.width // 2, loc_ca2.top + loc_ca2.height // 2)
-            time.sleep(0.2); mouse_left_click(); time.sleep(0.2)
+        self.find_and_click_v49("ca2")
         send_key(SCAN_INSERT, False, True); time.sleep(0.1); send_key(SCAN_INSERT, True, True); time.sleep(0.5)
         
         return True
@@ -398,11 +394,12 @@ class CustomApp:
             for idx, hwnd in hwnds:
                 if self.stop_event.is_set(): break
                 user32.ShowWindow(hwnd, SW_RESTORE); time.sleep(0.2); user32.SetForegroundWindow(hwnd); time.sleep(0.5)
-                if self.current_task == "STORAGE": self.task_storage_v48()
-                else: self.task_arrow_v48()
+                if self.current_task == "STORAGE": self.task_storage_v49()
+                else: self.task_arrow_v49()
                 user32.ShowWindow(hwnd, SW_MINIMIZE); time.sleep(0.5)
             if self.stop_event.is_set(): break
             
+            # 根據任務類型決定倒數單位 (存倉:小時, 製作箭:分鐘)
             wait = int(self.interval_storage * 3600) if self.current_task == "STORAGE" else int(self.interval_arrow * 60)
             while wait > 0 and not self.stop_event.is_set():
                 h, r = divmod(wait, 3600); m, s = divmod(r, 60)
