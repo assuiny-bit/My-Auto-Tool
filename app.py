@@ -311,20 +311,19 @@ class CustomApp:
             self.find_and_click_v49("ii", 0, -30, drag_x=300)
             self.find_and_click_v49("ff")
             
-        # 🌟 關鍵緩衝：大循環完成後等待 7 秒
-        self.status_label.config(text="採購完成，等待緩衝 7 秒...")
-        time.sleep(7)
+        # 🌟 修改 1：移除採購完成後的 7 秒等待
+        self.status_label.config(text="採購完成，繼續執行製作...")
             
-        # 3. 製作動作 (25次) - 加速節奏 (移除開頭1秒)
+        # 3. 製作動作 (25次) - 根據需求調整
         for cycle in range(25):
             if self.stop_event.is_set(): return False
             self.status_label.config(text=f"製作動作: {cycle+1}/25")
-            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True); time.sleep(0.5) # 按 7 並等待 0.5 秒
-            self.find_and_click_v49("ee", clicks=2) # 雙擊 ee
-            time.sleep(0.5) # 雙擊後等待 0.5 秒
-            time.sleep(0.5) # 額外等待 0.5 秒確保動作完成
+            # 按鍵操作：按下並放開鍵盤上的數字鍵 7
+            send_key(SCAN_7); time.sleep(0.1); send_key(SCAN_7, True)
+            # 🌟 修改 2：搜尋圖片 gg.png，向上偏移 210 並雙擊
+            self.find_and_click_v49("gg", offset_y=-210, clicks=2)
             
-        # 4. 中段切換與確認
+        # 4. 中段切換與成品轉移
         self.status_label.config(text="執行中段切換與確認...")
         self.find_and_click_v49("change")
         send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.5)
@@ -337,7 +336,8 @@ class CustomApp:
         # 數量設定 (3 與 5 = 35)
         send_key(SCAN_3); time.sleep(0.1); send_key(SCAN_3, True); time.sleep(0.3)
         send_key(SCAN_5); time.sleep(0.1); send_key(SCAN_5, True); time.sleep(0.5)
-        for _ in range(2): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
+        # 🌟 修改 3：確認操作改為連續按下 Enter 1 次
+        for _ in range(1): send_key(SCAN_ENTER); time.sleep(0.1); send_key(SCAN_ENTER, True); time.sleep(0.3)
         
         # 結束製作
         self.find_and_click_v49("over")
